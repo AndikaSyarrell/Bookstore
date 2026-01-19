@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Category;
@@ -25,7 +26,9 @@ class DashboardController extends Controller
     }
 
     public function showUsers(){
-        return view('dashboard.user.index');
+        $users = User::where('role_id', '!=', Auth::user()->role_id)->paginate(5);
+
+        return view('dashboard.user.index', ['users' => $users]);
     }
 
     public function showProfile(){

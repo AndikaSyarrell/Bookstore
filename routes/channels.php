@@ -6,7 +6,6 @@ Broadcast::channel('chat-room', function ($user) {
     // Data yang direturn akan diterima oleh user lain di frontend.
     return [
         'id' => $user->id,
-        'name' => $user->name,
-        'img' => $user->img
+        'name' => $user->name
     ];
 });

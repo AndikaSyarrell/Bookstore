@@ -25,7 +25,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Total User</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">24</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $users->total() }}</p>
                 </div>
                 <div class="bg-indigo-100 rounded-full p-3">
                     <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Active</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">20</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">6</p>
                 </div>
                 <div class="bg-green-100 rounded-full p-3">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,28 +152,42 @@
                             <span class="text-sm font-medium text-gray-900">{{ $user->role->name }}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            @if($user->is_active)
-                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                Active
-                            </span>
-                            @elseif(!$user->is_active)
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                Inactive
-                            </span>
-                        </td>
-                        @endif
+                            <div x-data>
+                                <!-- Cek apakah ID user ini ada di dalam global store 'status' -->
+                                <template x-if="$store.status.onlineUsers.some(u => u.id === {{ $user->id }})">
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Online
+                                    </span>
+                                </template>
+
+                                <template x-if="!$store.status.onlineUsers.some(u => u.id === {{ $user->id }})">
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-500">
+                                        Offline
+                                    </span>
+                                </template>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             Jan 15, 2026
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button
-                                @click="showModal = true; editMode = true"
-                                class="text-indigo-600 hover:text-indigo-900 mr-3">
-                                Edit
-                            </button>
-                            <button class="text-red-600 hover:text-red-900">Delete</button>
+
+                            <template x-if="$store.status.onlineUsers.some(u => u.id === {{ $user->id }})">
+                                <div class="">
+                                    <button disabled class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                        Edit
+                                    </button>
+                                    <button disabled class="text-slate-500">Delete</button>
+                                </div>
+                            </template>
+                            <template x-if="!$store.status.onlineUsers.some(u => u.id === {{ $user->id }})">
+                                <div class="">
+                                    <button class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                        Edit
+                                    </button>
+                                    <button class="text-red-600 hover:text-red-900">Delete</button>
+                                </div>
+                            </template>
                         </td>
                     </tr>
                     @endforeach
@@ -183,7 +197,8 @@
 
         <!-- Pagination -->
         <div class="bg-white px-6 py-4 border-t border-gray-200">
-            <div class="flex items-center justify-between">
+            {{ $users->links() }}
+            <!-- <div class="flex items-center justify-between">
                 <div class="text-sm text-gray-700">
                     Showing <span class="font-medium">1</span> to <span class="font-medium">10</span> of <span class="font-medium">24</span> results
                 </div>
@@ -198,7 +213,7 @@
                         Next
                     </button>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 </div>
