@@ -3,7 +3,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\User;
+use GuzzleHttp\Promise\Create;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -74,7 +76,8 @@ class AuthController extends Controller
      */
     public function showRegisterForm()
     {
-        return view('auth.register');
+        $roles = Role::all()->whereNotIn('name', ['master']); // Exclude 'master' role
+        return view('auth.register', compact('roles'));
     }
 
     /**
@@ -84,9 +87,11 @@ class AuthController extends Controller
     {
         // Validate the request
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|exists:roles,id',
+            'no_telp' => 'required|string|max:20'
         ]);
 
         // Create the user
@@ -94,16 +99,29 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'role_id' => (int) $validated['role'],
+            'no_telp' => $validated['no_telp'],
         ]);
 
-        // Log the user in
-        Auth::login($user);
+        if ($user) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User created successfully.',
+                'data' => $user
+            ], 201);
+        }
 
-        // Regenerate session
-        $request->session()->regenerate();
+        // Opsional: jika terjadi kegagalan manual
+        return response()->json([
+            'success' => false,
+            'message' => 'Registration failed.',
+        ], 500);
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Registration successful! Welcome, ' . $user->name . '!');
+        //jika menggunakan form biasa
+        // return redirect()->route('login')
+        //     ->with('success', 'Registration successful! Please log in.');
+
+
     }
 
     /**
