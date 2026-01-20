@@ -392,7 +392,7 @@
                         // Simulate API call
                         await new Promise(resolve => setTimeout(resolve, 2000));
 
-                        const csrf = document.querySelector('input[name="_token"]').value;;
+                        const csrf = document.querySelector('input[name="_token"]').value;
 
                         // In production, replace with actual API call:
                         const response = await fetch("{{route('register.post')}}", {

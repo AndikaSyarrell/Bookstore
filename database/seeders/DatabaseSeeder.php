@@ -17,15 +17,40 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test buyer',
-            'email' => 'test.buyer@example.com',
-            'password' => bcrypt('password'),
-            'role_id' => 3,
-            'img'=> null,
-            'address'=> '123 maint st',
-            'birth_date'=> '1999-10-01',
-            'no_telp'=> '17443625',
-        ]);
+        User::factory()
+            ->count(3)
+            ->sequence(
+                [
+                    'name' => 'Test Master',
+                    'email' => 'test.master@example.com',
+                    'password' => bcrypt('password'),
+                    'role_id' => 1,
+                    'img' => null,
+                    'address' => '123 maint st',
+                    'birth_date' => '1999-10-01',
+                    'no_telp' => '17443625',
+                ],
+                [
+                    'name' => 'Test Seller',
+                    'email' => 'test.seller@example.com',
+                    'password' => bcrypt('password'),
+                    'role_id' => 2,
+                    'img' => null,
+                    'address' => '123 maint st',
+                    'birth_date' => '1999-10-01',
+                    'no_telp' => '17443626',
+                ],
+                [
+                    'name' => 'Test buyer',
+                    'email' => 'test.buyer@example.com',
+                    'password' => bcrypt('password'),
+                    'role_id' => 3,
+                    'img' => null,
+                    'address' => '123 maint st',
+                    'birth_date' => '1999-10-01',
+                    'no_telp' => '17443627',
+                ],
+            )
+            ->create();
     }
 }

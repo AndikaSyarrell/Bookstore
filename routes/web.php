@@ -4,6 +4,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/users', 'showUsers')->name('users');
 
         Route::get('/categories', 'showCategories')->name('categories');
+
+        Route::get('/products', 'showProducts')->name('products');
     });
 
     Route::prefix('/dashboard/categories')->controller(CategoryController::class)->group(function(){
@@ -37,6 +40,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/{category}/update', 'update')->name('categories.update');
         Route::delete('/{category}/delete', 'destroy')->name('categories.delete');
         Route::get('/categories/search', 'search')->name('categories.search');
+    });
+
+    Route::prefix('/dashboard/products')->controller(ProductsController::class)->group(function(){
+        Route::get('/create', 'create')->name('products.create');
+        Route::post('/store', 'store')->name('products.store');
+        Route::post('/{product}/update', 'update')->name('products.update');
+        Route::delete('/{product}/delete', 'destroy')->name('products.delete');
+        Route::get('products/search', 'search')->name('products.search');
     });
 
     Route::prefix('/dashboard/profile')->controller(UserController::class)->group(function(){
@@ -50,7 +61,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/store', 'store')->name('users.store');
         Route::get('/{id}/edit', 'edit')->name('users.edit');
         Route::post('/{id}/update', 'update')->name('users.update');
-        Route::post('/{id}/delete', 'destroy')->name('users.delete');
+        Route::delete('/{id}/delete', 'destroy')->name('users.delete');
     });
 });
 

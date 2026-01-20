@@ -13,6 +13,13 @@ class role_seeder extends Seeder
      */
     public function run(): void
     {
-        Role::factory(5)->create();
+        Role::factory()
+            ->count(3)
+            ->sequence(
+                ['name' => 'master'],
+                ['name' => 'seller'],
+                ['name' => 'buyer']
+            )
+            ->create();
     }
 }

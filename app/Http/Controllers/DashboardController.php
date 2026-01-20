@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,12 @@ class DashboardController extends Controller
         } else {
             return view('errors.index', ['message' => 'unauthorized']);
         }
+    }
+
+    public function showProducts()
+    {
+        $products = Product::paginate(5);
+        return view('dashboard.products.index', ['products'=> $products]);
     }
 
     public function showCategories(){
