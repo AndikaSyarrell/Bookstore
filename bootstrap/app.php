@@ -7,10 +7,11 @@ use App\Http\Middleware\AuthMiddleware;
 use App\Http\Middleware\GuestMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
+
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        commands: __DIR__.'/../routes/console.php',
-        channels: __DIR__.'/../routes/channels.php',
+        web: __DIR__ . '/../routes/web.php',
+        commands: __DIR__ . '/../routes/console.php',
+        channels: __DIR__ . '/../routes/channels.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
@@ -26,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
         //     'guest' => \Illuminate\Auth\Middleware\RedirectIfAuthenticated::class,
         // ]);
     })
-    ->withExceptions(function (Exceptions $exceptions){
+
+    ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+    ->withBroadcasting(__DIR__ . '/../routes/channels.php')
+    ->create();

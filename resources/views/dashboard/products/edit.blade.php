@@ -190,14 +190,14 @@
         function createProduct() {
             return {
                 formData: {
-                    title: '',
-                    category: '',
-                    author: '',
-                    description: '',
-                    price: '',
-                    stock: ''
+                    title: '{{ $p->title }}',
+                    category: '{{ $p->category_id }}',
+                    author: '{{ $p->author }}',
+                    description: '{{ $p->description }}',
+                    price: '{{ $p->price }}',
+                    stock: '{{ $p->stock }}'
                 },
-                productImage: null,
+                productImage: `{{ $p->img ? asset('storage/products/' . $p->img) : null }}`,
                 productImagePreview: null,
                 errors: {},
                 loading: false,
@@ -217,15 +217,7 @@
                                 this.errors.category = 'Kategori wajib dipilih';
                             }
                             break;
-
-                        case 'description':
-                            if (!this.formData.description.trim()) {
-                                this.errors.description = 'Deskripsi produk wajib diisi';
-                            } else if (this.formData.description.length < 20) {
-                                this.errors.description = 'Deskripsi minimal 20 karakter';
-                            }
-                            break;
-
+                            
                         case 'price':
                             if (!this.formData.price) {
                                 this.errors.price = 'Harga wajib diisi';
@@ -296,7 +288,7 @@
 
                         data.append('img', this.productImage);
 
-                        const response = await fetch("{{ route('products.store') }}", {
+                        const response = await fetch("{{ route('products.update', $p->id) }}", {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': csrf,

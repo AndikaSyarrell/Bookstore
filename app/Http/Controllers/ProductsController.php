@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
-use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class ProductsController extends Controller
@@ -19,10 +19,7 @@ class ProductsController extends Controller
         //
     }
 
-    public function search()
-    {
-
-    }
+    public function search() {}
 
     /**
      * Show the form for creating a new resource.
@@ -80,7 +77,8 @@ class ProductsController extends Controller
 
         /** =========================
          * HANDLE FILE UPLOAD
-         * ========================= */ elseif ($request->hasFile('img')) {
+         * ========================= */
+        elseif ($request->hasFile('img')) {
 
             $request->validate([
                 'img' => 'image|mimes:jpeg,png,jpg,webp|max:2048'
@@ -116,24 +114,107 @@ class ProductsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Product $products)
+    public function edit($id)
     {
-        //
+        $p = Product::find($id);
+        $categories = Category::all();
+        return view('dashboard.products.edit', compact('p','categories'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Product $products)
+    public function update(Request $request, $id)
     {
-        //
+        // 1. Cari produk berdasarkan ID
+        $product = Product::findOrFail($id);
+
+        // 2. Keamanan: Pastikan hanya pemilik yang bisa mengupdate
+        if ($product->seller_id !== Auth::user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // 3. Validasi (mirip store, tapi field bisa dibuat 'sometimes')
+        $request->validate([
+            "title" => 'required|string|max:255',
+            "author" => "sometimes|string|max:255",
+            "category" => "required|exists:categories,id",
+            "price" => "required|numeric",
+            "stock" => "required|numeric",
+            "description" => 'nullable|string|max:500',
+            'img' => 'nullable',
+        ]);
+
+        // Ambil data lama sebagai base update
+        $productData = [
+            "title" => $request->title,
+            "author" => $request->author,
+            "category_id" => $request->category,
+            "price" => $request->price,
+            "stock" => $request->stock,
+            "description" => $request->description,
+        ];
+
+        /** =========================
+         * HANDLE IMAGE UPDATE
+         * ========================= */
+        $newImage = null;
+
+        // A. Cek jika ada input Base64
+        if ($request->img && is_string($request->img) && str_starts_with($request->img, 'data:image')) {
+
+            preg_match('/^data:image\/(\w+);base64,/', $request->img, $matches);
+            $extension = $matches[1] ?? 'png';
+            $imageBase64 = substr($request->img, strpos($request->img, ',') + 1);
+            $imageBase64 = base64_decode($imageBase64);
+
+            if ($imageBase64 !== false) {
+                $newImage = Str::slug($request->title) . '-' . time() . '.' . $extension;
+                Storage::disk('public')->put('products/' . $newImage, $imageBase64);
+            }
+
+            // B. Cek jika ada input File Upload
+        } elseif ($request->hasFile('img')) {
+
+            $request->validate(['img' => 'image|mimes:jpeg,png,jpg,webp|max:2048']);
+            $file = $request->file('img');
+            $newImage = Str::slug($request->title) . '-' . time() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('products', $newImage, 'public');
+        }
+
+        // C. Jika ada gambar baru, hapus gambar lama dari storage
+        if ($newImage) {
+            if ($product->img && Storage::disk('public')->exists('products/' . $product->img)) {
+                Storage::disk('public')->delete('products/' . $product->img);
+            }
+            $productData['img'] = $newImage;
+        }
+
+        // 4. Update Database
+        $product->update($productData);
+
+        // 5. Response
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Product updated successfully.',
+                'data' => $product
+            ], 200);
+        }
+
+        return redirect()->back()->with('success', 'Product updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Product $products)
+    public function destroy(Product $product)
     {
-        //
+        if($product->img != null){
+                Storage::disk('public')->delete('products/' . $product->img);
+        };
+
+        $product->delete();
+        return back();
     }
 }

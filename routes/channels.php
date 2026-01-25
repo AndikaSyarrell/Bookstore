@@ -1,11 +1,9 @@
 <?php
+
+use App\Models\Chat;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('chat-room', function ($user) {
-    // Hanya user login yang bisa join. 
-    // Data yang direturn akan diterima oleh user lain di frontend.
-    return [
-        'id' => $user->id,
-        'name' => $user->name
-    ];
+Broadcast::channel('chat.{chatId}', function ($user, $chatId) {
+    $chat = Chat::find($chatId);
+    return $chat && ($chat->buyer_id === $user->id || $chat->seller_id === $user->id);
 });

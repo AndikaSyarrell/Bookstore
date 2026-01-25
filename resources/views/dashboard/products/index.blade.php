@@ -158,7 +158,11 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
                                             <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-                                                <span class="text-indigo-600 font-semibold">{{ substr($p->title, 0, 1) }}</span>
+                                                @if($p->img)
+                                                    <img src="{{ Storage::url('products/'.$p->img) }}" alt="{{ $p->title }}" class="w-10 h-10 rounded-lg object-cover">
+                                                @else
+                                                    <span class="text-indigo-600 font-semibold">{{ substr($p->title, 0, 1) }}</span>
+                                                @endif
                                             </div>
                                             <div>
                                                 <div class="text-sm font-medium text-gray-900">{{$p->title}}</div>
@@ -169,7 +173,7 @@
                                         <span class="text-sm text-gray-600">{{ $p->category->name }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-sm text-gray-600">{{ $p->category->author }}</span>
+                                        <span class="text-sm text-gray-600">{{ $p->author }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         Rp {{ number_format($p->price, 0, ',', '.') }}
@@ -184,11 +188,11 @@
                                         {{ $p->created_at->format('M d, Y') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button @click="showModal = true; editMode = true; selectedProducts = {{ $p->toJson() }} "
+                                        <a href="{{ route('products.edit', $p->id) }}"
                                             class="text-indigo-600 hover:text-indigo-900 mr-3">
                                             Edit
-                                        </button>
-                                        @if ($p->products()->count() < 1)
+                                        </a>
+                                        @if ($p->stock < 1)
                                             <form action="{{ route('products.delete', $p->id) }}" class="inline" method="POST">
                                                 @method('DELETE')
                                                 @csrf

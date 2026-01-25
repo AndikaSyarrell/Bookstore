@@ -25,82 +25,13 @@
 
             <div class="flex items-center">
                 <!-- message -->
-                <button class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24">
-                        <g fill="none" stroke="rgb(75, 85, 99)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                            <path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
-                            <rect width="20" height="16" x="2" y="4" rx="2" />
-                        </g>
-                    </svg>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                @include('layouts.partials.buttons.message')
 
                 <!-- Notifications -->
-                <button class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                    </svg>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                @include('layouts.partials.buttons.notification')
 
                 <!-- cart -->
-                <div class="relative z-10">
-                    <button @click="cartOpen = !cartOpen"
-                        @click.away="cartOpen = false"
-                        class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24">
-                            <path stroke-width="2" fill="rgb(75, 85, 99)" d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1m-9-1a2 2 0 0 1 4 0v1h-4Zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2Z" />
-                        </svg>
-                        <span
-                            x-show="cart.length > 0"
-                            x-text="cart.length"
-                            class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center font-bold"></span>
-                    </button>
-
-                    <!-- Cart Dropdown Menu -->
-                    <div
-                        x-show="cartOpen"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 transform scale-95"
-                        x-transition:enter-end="opacity-100 transform scale-100"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 transform scale-100"
-                        x-transition:leave-end="opacity-0 transform scale-95"
-                        class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 border border-gray-200"
-                        style="display: none;">
-                        
-                        <!-- Cart Header -->
-                        <div class="px-4 py-3 border-b border-gray-200">
-                            <h3 class="text-sm font-semibold text-gray-900">Shopping Cart</h3>
-                        </div>
-
-                        <!-- Cart Items -->
-                        <div class="max-h-64 overflow-y-auto">
-                            <template x-show="cart.length === 0">
-                                <div class="px-4 py-8 text-center text-gray-500">
-                                    <p>Your cart is empty</p>
-                                </div>
-                            </template>
-
-                            <template x-for="item in cart" :key="item.id">
-                                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center hover:bg-gray-50">
-                                    <div class="flex-1">
-                                        <p class="text-sm font-medium text-gray-900" ></p>
-                                        <p class="text-xs text-gray-500" ><span x-text="item.name"></span>x <span></span></p>
-                                    </div>
-                                    <p class="text-sm font-semibold text-gray-900" x-text="formatPrice(item.price)"></p>
-                                </div>
-                            </template>
-                        </div>
-
-                        <!-- Cart Footer -->
-                        <div class="px-4 py-3 border-t border-gray-200">
-                            <a href="#" class="block w-full text-center bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
-                                View Cart
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                @include('layouts.partials.buttons.cart')
             </div>
 
             <!-- Profile Dropdown -->

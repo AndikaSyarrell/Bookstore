@@ -61,9 +61,9 @@
             </h3>
 
             @if(auth()->check() && auth()->user()->role->name === 'seller')
-            <a href="{{ route('products') }}"
+            <a href="{{ route('preorders') }}"
                class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
-                      {{ request()->routeIs('products') 
+                      {{ request()->routeIs('preorders.*') || request()->routeIs('preorders')
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'text-gray-700 hover:bg-gray-100' }}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
