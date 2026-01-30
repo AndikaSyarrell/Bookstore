@@ -1,7 +1,7 @@
 import './bootstrap';
 
 // // Inisialisasi daftar user online global
-// window.onlineUsers = [];
+window.onlineUsers = [];
 
 // console.log('--- Inisialisasi WebSocket Reverb ---');
 
@@ -41,22 +41,22 @@ import './bootstrap';
 //         console.error('Detail Error:', error);
 //     });
 
-// document.addEventListener('alpine:init', () => {
-//     // Membuat store global di Alpine
-//     Alpine.store('status', {
-//         onlineUsers: [],
+document.addEventListener('alpine:init', () => {
+    // Membuat store global di Alpine
+    Alpine.store('status', {
+        onlineUsers: [],
         
-//         setUsers(users) {
-//             this.onlineUsers = users;
-//         },
-//         addUser(user) {
-//             this.onlineUsers.push(user);
-//         },
-//         removeUser(user) {
-//             this.onlineUsers = this.onlineUsers.filter(u => u.id !== user.id);
-//         }
-//     });
-// });
+        setUsers(users) {
+            this.onlineUsers = users;
+        },
+        addUser(user) {
+            this.onlineUsers.push(user);
+        },
+        removeUser(user) {
+            this.onlineUsers = this.onlineUsers.filter(u => u.id !== user.id);
+        }
+    });
+});
 
 // window.Echo.join('chat-room')
 //     .here((users) => {

@@ -45,7 +45,7 @@
                             </div>
                         </div>
                         <div class="p-4">
-                            <h3 class="text-sm font-semibold text-gray-800 mb-2 line-clamp-2" x-text="product.name"></h3>
+                            <a href="{{ route('book.details') }}" class="text-sm font-semibold text-gray-800 mb-2 line-clamp-2" x-text="product.name"></a>
                             <div class="mb-3">
                                 <div x-show="product.discount" class="text-xs text-gray-500 line-through" x-text="formatPrice(product.original_price)"></div>
                                 <div class="text-lg font-bold text-blue-600" x-text="formatPrice(product.price)"></div>

@@ -186,7 +186,7 @@
                             <label for="remember" class="text-gray-500 dark:text-gray-300">Remember me</label>
                           </div>
                       </div>
-                      <a href="#" class="text-sm font-medium text-[#2563eb] hover:underline dark:text-[#eff6ff]0">Forgot password?</a>
+                      <a href="{{ route('password.request') }}" class="text-sm font-medium text-[#2563eb] hover:underline dark:text-[#eff6ff]0">Forgot password?</a>
                   </div>
                   <button type="submit" class="w-full text-white bg-[#2563eb] hover:bg-[#1d4ed8] focus:ring-4 focus:outline-none focus:ring-[#93c5fd] font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] dark:focus:ring-[#1e40af]">Sign in</button>
                   <p class="text-sm font-light text-gray-500 dark:text-gray-400">

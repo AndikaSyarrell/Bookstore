@@ -2,6 +2,8 @@
 // routes/web.php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\BuyerController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
@@ -17,12 +19,26 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+
+    // Forgot Password Routes
+    Route::get('/forgot-password', [ResetPasswordController::class, 'showForgotForm'])
+        ->name('password.request');
+
+    Route::post('/forgot-password', [ResetPasswordController::class, 'sendResetLink'])
+        ->name('password.email');
+
+    // Reset Password Routes
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])
+        ->name('password.reset');
+
+    Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword'])
+        ->name('password.update');
 });
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/home', [DashboardController::class, 'buyerPage'])->name('main');
+    Route::get('/home', [BuyerController::class, 'index'])->name('homepage');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::prefix('/dashboard')->controller(DashboardController::class)->group(function () {
@@ -40,6 +56,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/pre-order', 'showOrders')->name('preorders');
 
         Route::get('/chats', 'showChats')->name('chats');
+    });
+
+    Route::prefix('/home')->controller(BuyerController::class)->group(function () {
+        Route::get('/profile', 'showProfile')->name('profile.buyer');
+
+        Route::get('/settings', 'showSettings')->name('settings');
+        Route::post('/settings/update', 'updateSettings')->name('settings.update');
+
+        Route::get('/book-detail', 'showBookDetails')->name('book.details');
+
+        Route::get('/cart', 'showCart')->name('cart');
+        Route::get('/cart/checkout', 'showcheckout')->name('cart.checkout');
+        Route::get('/cart/checkout/payment', 'showPayment')->name('cart.checkout.payment');
+
+        Route::get('/chats', 'showChats')->name('chats');
+
+        Route::get('/track', 'showTracks')->name('tracks');
     });
 
     Route::prefix('/dashboard/categories')->controller(CategoryController::class)->group(function () {

@@ -23,7 +23,7 @@
     >
         <div class="p-4 border-b border-gray-200 flex items-center justify-between">
             <h3 class="font-semibold text-gray-800">Pesan</h3>
-            <a href="/messages" class="text-sm text-blue-600 hover:underline">Lihat Semua</a>
+            <a href="{{ route('chats') }}" class="text-sm text-blue-600 hover:underline">Lihat Semua</a>
         </div>
         
         <div class="max-h-96 overflow-y-auto divide-y divide-gray-200">
