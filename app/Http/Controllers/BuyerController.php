@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Chat;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Category;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Pagination\Paginator;
 
 class BuyerController extends Controller
@@ -16,15 +17,49 @@ class BuyerController extends Controller
     public function index()
     {
         if (Auth::check() && Auth::user()->role->name === 'buyer') {
-            $categories = Category::withCount('products')
-            ->orderBy('products_count', 'asc')
-            ->take(6);
+            // Ambil data categories (max 6)
+            $categories = Category::withCount(['products' => function ($query) {
+                $query->where('stock', '>', 0);
+            }])
+                ->limit(6)
+                ->get()
+                ->map(function ($category) {
+                    return [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                        'count' => $category->products_count,
+                        'slug' => $category->slug,
+                    ];
+                });
 
-            return view('buyer.index', compact('categories'));
+            // 2. GET FEATURED PRODUCTS (max 6)
+            // Rekomendasi query untuk featured products
+            $featuredProducts = Product::query()
+                ->where('stock', '>', 0)
+                ->with(['seller', 'category'])
+                ->withSum('orderDetails as sold', 'quantity')
+                ->orderByDesc('sold')
+                ->limit(6)
+                ->get()
+                ->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->title, // 'title' di database = 'name' di frontend
+                        'image' => $product->img ? asset('storage/products/' . $product->img) : null,
+                        'price' => (float) $product->price,
+                        'sold' => (int) $product->sold,
+                        // data tambahan jika diperlukan:
+                        'author' => $product->author,
+                        'stock' => $product->stock,
+                    ];
+                });
+
+            return view('buyer.index', compact('categories', 'featuredProducts'));
         } else {
             return view('errors.index', ['message' => 'unauthorized']);
         }
     }
+
 
     public function bookDetails()
     {

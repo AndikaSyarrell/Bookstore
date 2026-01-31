@@ -22,7 +22,7 @@
         style="display: none;"
     >
         <div class="p-4 border-b border-gray-200">
-            <h3 class="font-semibold text-gray-800">Keranjang Belanja</h3>
+            <a href="{{ route('cart') }}" class="font-semibold text-gray-800 hover:text-sky-500">Keranjang Belanja</a>
         </div>
         
         <div class="max-h-96 overflow-y-auto">
