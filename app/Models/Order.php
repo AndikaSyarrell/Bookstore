@@ -7,12 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
+        'order_number',
         'seller_id',
         'buyer_id',
         'order_date',
         'status',
+        'note',
         'shipping_address',
-        'total_ammount'
+        'total_amount',
+        'subtotal',
+        'tax',
+        'shipping_cost'
     ];
 
     public function orderDetails(){
@@ -28,7 +33,7 @@ class Order extends Model
     }
 
     public function payment(){
-        return $this->hasMany(Payment::class);
+        return $this->hasOne(Payment::class);
     }
 
 }

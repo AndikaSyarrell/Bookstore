@@ -68,7 +68,15 @@ class BuyerController extends Controller
 
     public function showCart()
     {
-        return view('buyer.cart.index');
+        $shipping = Auth::user();
+        return view('buyer.cart.index', ['shipping' => [
+            'name' => $shipping->name,
+            'phone' => $shipping->no_telp,
+            'address' => $shipping->address,
+            'city' => $shipping->city,
+            'province' => $shipping->province,
+            'postal_code' => $shipping->postal_code,
+        ]]);
     }
     public function showCheckout()
     {
@@ -116,7 +124,8 @@ class BuyerController extends Controller
 
     public function showProfile()
     {
-        return view('dashboard.profile.index');
+        $user = Auth::user();
+        return view('buyer.profile.index', compact('user'));
     }
 
     public function showBookDetails()

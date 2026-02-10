@@ -4,10 +4,13 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\BuyerController;
+use App\Http\Controllers\BuyerProfileController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\UserController;
 use App\Models\Message;
@@ -41,23 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', [BuyerController::class, 'index'])->name('homepage');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::prefix('/dashboard')->controller(DashboardController::class)->group(function () {
-        Route::get('/profile', 'showProfile')->name('profile');
-
-        Route::get('/settings', 'showSettings')->name('settings');
-        Route::post('/settings/update', 'updateSettings')->name('settings.update');
-
-        Route::get('/users', 'showUsers')->name('users');
-
-        Route::get('/categories', 'showCategories')->name('categories');
-
-        Route::get('/products', 'showProducts')->name('products');
-
-        Route::get('/pre-order', 'showOrders')->name('preorders');
-
-        Route::get('/chats', 'showChats')->name('chats');
-    });
-
+    //Buyer Routes
     Route::prefix('/home')->controller(BuyerController::class)->group(function () {
         Route::get('/profile', 'showProfile')->name('profile.buyer');
 
@@ -73,6 +60,64 @@ Route::middleware('auth')->group(function () {
         Route::get('/chats', 'showChats')->name('chats');
 
         Route::get('/track', 'showTracks')->name('tracks');
+    });
+
+    Route::prefix('/home/cart')->controller(CartController::class)->group(function () {
+        Route::get('/get', 'getCart')->name('cart.get');
+        Route::post('/store', 'add')->name('cart.store');
+        Route::put('/update/{id}', 'update')->name('cart.update');
+        Route::delete('/remove/{id}', 'remove')->name('cart.remove');
+        Route::post('/checkout/process', [OrderController::class, 'processCheckout'])->name('checkout.process');
+    });
+
+     // Checkout process
+    Route::prefix('/home/profile')->controller(BuyerProfileController::class)->group(function(){
+        Route::get('/get','show')->name('Bprofile.show');
+        Route::put('/update}','update')->name('Bprofile.update');
+        Route::post('/update-photo','updatePhoto')->name('Bprofile.update-photo');
+        Route::put('/update/password','updatePassword')->name('Bprofile.update-password');
+        Route::delete('/remove-photo','deletePhoto')->name('Bprofile.remove-photo');
+    });
+
+    Route::prefix('/home/orders')->controller(OrderController::class)->group(function () {
+        // List orders
+        Route::get('/', 'index')->name('order.index');
+        
+        // View order detail
+        Route::get('/{id}', 'show')->name('order.show');
+        
+        // Upload payment proof (Buyer)
+        Route::post('/{id}/upload-proof', 'uploadPaymentProof')->name('order.upload-proof');
+        
+        // Verify payment (Seller)
+        Route::post('/{id}/verify-payment', 'verifyPayment')->name('order.verify-payment');
+        
+        // Update order status (Seller)
+        Route::post('/{id}/update-status', 'updateStatus')->name('order.update-status');
+        
+        // Cancel order (Buyer)
+        Route::post('/{id}/cancel', 'cancel')->name('order.cancel');
+    });
+
+    
+    //dashboard admin and seller
+    Route::prefix('/dashboard')->controller(DashboardController::class)->group(function () {
+        Route::get('/profile', 'showProfile')->name('profile');
+
+        Route::get('/settings', 'showSettings')->name('settings');
+        Route::post('/settings/update', 'updateSettings')->name('settings.update');
+
+        Route::get('/users', 'showUsers')->name('users');
+
+        Route::get('/categories', 'showCategories')->name('categories');
+
+        Route::get('/products', 'showProducts')->name('products');
+
+        Route::get('/pre-order', 'showOrders')->name('preorders');
+        // View order detail
+        Route::get('/pre-order/{id}', [OrderController::class, 'show'])->name('order.show-seller');
+
+        Route::get('/chats', 'showChats')->name('chats');
     });
 
     Route::prefix('/dashboard/categories')->controller(CategoryController::class)->group(function () {

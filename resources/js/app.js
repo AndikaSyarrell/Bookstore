@@ -1,4 +1,5 @@
 import './bootstrap';
+import './cart'
 
 // // Inisialisasi daftar user online global
 window.onlineUsers = [];

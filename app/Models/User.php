@@ -26,7 +26,12 @@ class User extends Authenticatable
         'address',
         'no_telp',
         'img',
-        'birth_date'
+        'birth_date',
+        'gender',
+        'bio',
+        'city',
+        'province',
+        'postal_code',
     ];
 
     public function role()

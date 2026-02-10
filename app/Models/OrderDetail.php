@@ -13,7 +13,7 @@ class OrderDetail extends Model
         'total_price',
     ];
 
-    public function products(){
+    public function product(){
         return $this->belongsTo(Product::class);
     }
 

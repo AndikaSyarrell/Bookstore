@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Chat;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Category;
@@ -29,7 +30,55 @@ class DashboardController extends Controller
 
     public function showOrders()
     {
-        return view('dashboard.preorder.index');
+        $sellerId = Auth::id();
+
+        // Get stats
+        $stats = [
+            'pending_verification' => Order::where('seller_id', $sellerId)
+                ->where('status', 'pending_verification')
+                ->count(),
+            'processing' => Order::where('seller_id', $sellerId)
+                ->where('status', 'processing')
+                ->count(),
+            'shipped' => Order::where('seller_id', $sellerId)
+                ->where('status', 'shipped')
+                ->count(),
+            'delivered' => Order::where('seller_id', $sellerId)
+                ->where('status', 'delivered')
+                ->count(),
+        ];
+
+        // Get orders by status
+        $pendingOrders = Order::where('seller_id', $sellerId)
+            ->where('status', 'pending_verification')
+            ->with(['buyer', 'payment', 'orderDetails.product'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $processingOrders = Order::where('seller_id', $sellerId)
+            ->where('status', 'processing')
+            ->with(['buyer', 'orderDetails.product'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $shippedOrders = Order::where('seller_id', $sellerId)
+            ->where('status', 'shipped')
+            ->with(['buyer', 'orderDetails.product'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $allOrders = Order::where('seller_id', $sellerId)
+            ->with(['buyer', 'payment'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('dashboard.preorder.index', compact(
+            'stats',
+            'pendingOrders',
+            'processingOrders',
+            'shippedOrders',
+            'allOrders'
+        ));
     }
 
     public function showChats()
@@ -79,6 +128,4 @@ class DashboardController extends Controller
     {
         return view('dashboard.profile.index');
     }
-
-    
 }
