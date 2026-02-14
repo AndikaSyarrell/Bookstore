@@ -465,7 +465,7 @@ function sellerApproval() {
             const notes = prompt('Notes (optional):');
 
             try {
-                const response = await fetch(`/orders/${orderId}/update-status`, {
+                const response = await fetch(`{{ route('order.update-status', ['id'=>'__ID__']) }}`.replace('__ID__',orderId), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

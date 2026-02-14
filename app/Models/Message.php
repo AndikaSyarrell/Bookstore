@@ -30,4 +30,22 @@ class Message extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+
+    /**
+     * Get metadata as array
+     */
+    public function getMetadataArrayAttribute()
+    {
+        return json_decode($this->metadata, true);
+    }
+
+    /**
+     * Check if message is from current user
+     */
+    public function isFromCurrentUser()
+    {
+        return $this->user_id === auth()->id();
+    }
+
 }

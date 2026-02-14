@@ -59,6 +59,7 @@ document.addEventListener('alpine:init', () => {
     });
 });
 
+
 // window.Echo.join('chat-room')
 //     .here((users) => {
 //         console.log('Users online:', users);

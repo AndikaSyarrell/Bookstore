@@ -3,111 +3,248 @@
 namespace App\Http\Controllers;
 
 use App\Models\Chat;
+use App\Models\Message;
+use App\Models\Product;
 use App\Models\User;
 use App\Events\MessageSent;
-use App\Events\TypingIndicator;
+use App\Events\MessageRead;
+use App\Events\UserTyping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
-    // Dapatkan percakapan dengan user tertentu
-    public function getConversation($userId)
+    /**
+     * Start or continue chat with seller (with product context)
+     */
+    public function startChat(Request $request)
     {
-        $currentUserId = Auth::id();
-        $otherUser = User::findOrFail($userId);
-        
-        $messages = Chat::where(function($query) use ($currentUserId, $userId) {
-            $query->where('sender_id', $currentUserId)
-                  ->where('receiver_id', $userId);
-        })->orWhere(function($query) use ($currentUserId, $userId) {
-            $query->where('sender_id', $userId)
-                  ->where('receiver_id', $currentUserId);
-        })->orderBy('created_at', 'asc')
-          ->get();
-        
-        // Dalam real implementation, Anda perlu menyimpan encryption key dengan aman
-        // Ini hanya contoh sederhana
-        $encryptionKey = session('chat_key_' . min($currentUserId, $userId) . '_' . max($currentUserId, $userId));
-        
-        return response()->json([
-            'messages' => $messages,
-            'otherUser' => $otherUser,
-            'encryptionKey' => $encryptionKey
-        ]);
+        $sellerId = $request->get('seller_id');
+        $productId = $request->get('product_id');
+
+        // Validate seller exists
+        $seller = User::findOrFail($sellerId);
+
+        // Check if chat already exists
+        $chat = Chat::where('buyer_id', Auth::id())
+            ->where('seller_id', $sellerId)
+            ->first();
+
+        if (!$chat) {
+            // Create new chat
+            $chat = Chat::create([
+                'buyer_id' => Auth::id(),
+                'seller_id' => $sellerId,
+                'last_message_at' => now()
+            ]);
+        }
+
+        // If product context provided, send initial message
+        if ($productId) {
+            $product = Product::find($productId);
+
+            if ($product) {
+                // Check if product context message already sent
+                $existingProductMessage = Message::where('chat_id', $chat->id)
+                    ->where('type', 'product_context')
+                    ->where('metadata->product_id', $productId)
+                    ->exists();
+
+                if (!$existingProductMessage) {
+                    // Send product context message
+                    $message = Message::create([
+                        'chat_id' => $chat->id,
+                        'user_id' => Auth::id(),
+                        'message' => "Hi! I'm interested in this product:",
+                        'type' => 'product_context',
+                        'metadata' => json_encode([
+                            'product_id' => $product->id,
+                            'product_title' => $product->title,
+                            'product_price' => $product->price,
+                            'product_image' => $product->img,
+                            'product_url' => route('products.show', $product->id)
+                        ]),
+                        'read' => false
+                    ]);
+
+                    $chat->update(['last_message_at' => now()]);
+
+                    // Broadcast the message
+                    broadcast(new MessageSent($message))->toOthers();
+                }
+            }
+        }
+
+        // Redirect to chat page
+        return redirect()->route('messages.show', $chat->id);
     }
 
-    // Kirim pesan baru
-    public function sendMessage(Request $request)
+    /**
+     * Display chat page
+     */
+    public function show($id)
+    {
+        $chat = Chat::with(['buyer', 'seller'])
+            ->where(function ($query) {
+                $query->where('buyer_id', Auth::id())
+                    ->orWhere('seller_id', Auth::id());
+            })
+            ->findOrFail($id);
+
+        // Get messages
+        $messages = Message::where('chat_id', $chat->id)
+            ->with('user')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $messagesFormatted = $messages->map(function ($msg) {
+            return [
+                'id' => $msg->id,
+                'chat_id' => $msg->chat_id,
+                'user_id' => $msg->user_id,
+                'user_name' => $msg->user->name,
+                'message' => $msg->message,
+                'type' => $msg->type,
+                'metadata_parsed' => json_decode($msg->metadata),
+                'read' => $msg->read,
+                'created_at' => $msg->created_at->toISOString(),
+                'formatted_time' => $msg->created_at->format('H:i'),
+            ];
+        });
+
+        // Mark messages as read and broadcast
+        $unreadMessages = Message::where('chat_id', $chat->id)
+            ->where('user_id', '!=', Auth::id())
+            ->where('read', false)
+            ->pluck('id')
+            ->toArray();
+
+        if (!empty($unreadMessages)) {
+            Message::whereIn('id', $unreadMessages)->update(['read' => true]);
+
+            // Broadcast read event
+            broadcast(new MessageRead($chat->id, Auth::id(), $unreadMessages))->toOthers();
+        }
+
+        return view('messages.show', compact('chat', 'messages'));
+    }
+
+    /**
+     * List all chats
+     */
+    public function index()
+    {
+        $user = Auth::user();
+
+        if ($user->role->name === 'buyer') {
+            $chats = Chat::where('buyer_id', $user->id)
+                ->with(['seller', 'messages' => function ($query) {
+                    $query->latest()->limit(1);
+                }])
+                ->withCount(['messages as unread_count' => function ($query) {
+                    $query->where('user_id', '!=', Auth::id())
+                        ->where('read', false);
+                }])
+                ->orderBy('last_message_at', 'desc')
+                ->get();
+        } else {
+            $chats = Chat::where('seller_id', $user->id)
+                ->with(['buyer', 'messages' => function ($query) {
+                    $query->latest()->limit(1);
+                }])
+                ->withCount(['messages as unread_count' => function ($query) {
+                    $query->where('user_id', '!=', Auth::id())
+                        ->where('read', false);
+                }])
+                ->orderBy('last_message_at', 'desc')
+                ->get();
+        }
+
+        return view('messages.index', compact('chats'));
+    }
+
+    /**
+     * Send message with broadcasting
+     */
+    public function sendMessage(Request $request, $chatId)
     {
         $request->validate([
-            'receiver_id' => 'required|exists:users,id',
             'message' => 'required|string|max:1000'
         ]);
 
-        $sender = Auth::user();
-        $receiver = User::findOrFail($request->receiver_id);
+        $chat = Chat::where(function ($query) {
+            $query->where('buyer_id', Auth::id())
+                ->orWhere('seller_id', Auth::id());
+        })
+            ->findOrFail($chatId);
 
-        // Generate encryption key dan IV
-        $encryptionKey = Str::random(32);
-        $iv = Str::random(16);
-        
-        // Enkripsi pesan
-        $encryptedMessage = Chat::encryptMessage($request->message, $encryptionKey, $iv);
-        
-        // Generate message hash
-        $messageHash = Chat::generateMessageHash($request->message, $sender->id, $receiver->id);
-        
-        // Simpan ke database
-        $chat = Chat::create([
-            'message_hash' => $messageHash,
-            'sender_id' => $sender->id,
-            'receiver_id' => $receiver->id,
-            'encrypted_message' => $encryptedMessage,
-            'encryption_key_hash' => Hash::make($encryptionKey),
-            'iv' => $iv,
-            'sender_role' => $sender->role, // asumsi ada kolom role di users table
-            'receiver_role' => $receiver->role,
-            'is_read' => false
+        $message = Message::create([
+            'chat_id' => $chat->id,
+            'user_id' => Auth::id(),
+            'message' => $request->message,
+            'type' => 'text',
+            'read' => false
         ]);
 
-        // Simpan encryption key di session (untuk demo)
-        $conversationId = min($sender->id, $receiver->id) . '_' . max($sender->id, $receiver->id);
-        session(['chat_key_' . $conversationId => $encryptionKey]);
+        $chat->update(['last_message_at' => now()]);
 
-        // Broadcast event
-        broadcast(new MessageSent($chat, $encryptionKey));
+        // Broadcast the message to other users
+        broadcast(new MessageSent($message))->toOthers();
 
-        return response()->json(['success' => true, 'message' => $chat]);
+        return response()->json([
+            'success' => true,
+            'message' => $message->load('user')
+        ]);
     }
 
-    // Update status typing
-    public function typingStatus(Request $request)
+    /**
+     * Broadcast typing status
+     */
+    public function typing(Request $request, $chatId)
     {
         $request->validate([
-            'is_typing' => 'required|boolean',
-            'receiver_id' => 'required|exists:users,id'
+            'is_typing' => 'required|boolean'
         ]);
 
-        $conversationId = min(Auth::id(), $request->receiver_id) . '.' . max(Auth::id(), $request->receiver_id);
-        
-        broadcast(new TypingIndicator(Auth::id(), $request->is_typing, $conversationId));
+        $chat = Chat::where(function ($query) {
+            $query->where('buyer_id', Auth::id())
+                ->orWhere('seller_id', Auth::id());
+        })
+            ->findOrFail($chatId);
+
+        // Broadcast typing event
+        broadcast(new UserTyping(
+            $chat->id,
+            Auth::id(),
+            Auth::user()->name,
+            $request->is_typing
+        ))->toOthers();
 
         return response()->json(['success' => true]);
     }
 
-    // Tandai pesan sebagai sudah dibaca
-    public function markAsRead($messageId)
+    /**
+     * Mark messages as read
+     */
+    public function markAsRead($chatId)
     {
-        $chat = Chat::findOrFail($messageId);
-        
-        if ($chat->receiver_id === Auth::id()) {
-            $chat->update([
-                'is_read' => true,
-                'read_at' => now()
-            ]);
+        $chat = Chat::where(function ($query) {
+            $query->where('buyer_id', Auth::id())
+                ->orWhere('seller_id', Auth::id());
+        })
+            ->findOrFail($chatId);
+
+        $messageIds = Message::where('chat_id', $chat->id)
+            ->where('user_id', '!=', Auth::id())
+            ->where('read', false)
+            ->pluck('id')
+            ->toArray();
+
+        if (!empty($messageIds)) {
+            Message::whereIn('id', $messageIds)->update(['read' => true]);
+
+            // Broadcast read event
+            broadcast(new MessageRead($chat->id, Auth::id(), $messageIds))->toOthers();
         }
 
         return response()->json(['success' => true]);

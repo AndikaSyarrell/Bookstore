@@ -12,12 +12,49 @@ use Illuminate\Support\Facades\Storage;
 class ProductsController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * List all products (for buyer)
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $query = Product::with(['seller', 'category'])
+            ->where('stock', '>', 0);
+
+        // Search
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('author', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by category
+        if ($request->has('category') && $request->category) {
+            $query->where('category_id', $request->category);
+        }
+
+        // Sort
+        $sortBy = $request->get('sort', 'latest');
+        switch ($sortBy) {
+            case 'price_low':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'name':
+                $query->orderBy('title', 'asc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+        }
+
+        $product = $query->paginate(12);
+
+        return view('buyer.books.index', compact('product'));
     }
+
 
     public function search() {}
 
@@ -106,9 +143,21 @@ class ProductsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Product $products)
+    public function show($id)
     {
-        //
+        $product = Product::with(['seller', 'category'])
+            ->findOrFail($id);
+
+        // Get related products (same category, exclude current product)
+        $relatedProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->where('stock', '>', 0)
+            ->with(['seller', 'category'])
+            ->inRandomOrder()
+            ->limit(4)
+            ->get();
+
+        return view('buyer.books.index', compact('product', 'relatedProducts'));
     }
 
     /**

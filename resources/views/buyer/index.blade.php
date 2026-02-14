@@ -105,7 +105,7 @@
                 @forelse($featuredProducts as $product)
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200 group">
                         <!-- Product Image -->
-                        <a href="#" class="block">
+                        <a href="{{ route('products.show', $product['id']) }}" class="block">
                             <div class="aspect-[3/4] bg-gray-200 overflow-hidden">
                                 @if($product['image'])
                                     <img 
@@ -125,7 +125,7 @@
 
                         <!-- Product Info -->
                         <div class="p-4">
-                            <a href="#" class="block">
+                            <a href="{{ route('products.show', $product['id']) }}" class="block">
                                 <h3 class="text-sm font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
                                     {{ $product['name'] }}
                                 </h3>

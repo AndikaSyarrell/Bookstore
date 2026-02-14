@@ -14,30 +14,47 @@ class MessageSent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public Message $message
-    ) {}
+    public $message;
 
-    public function broadcastOn(): Channel
+    public function __construct(Message $message)
     {
-        return new PresenceChannel('chat.' . $this->message->chat_id);
+        $this->message = $message->load('user');
     }
 
+    /**
+     * Get the channels the event should broadcast on.
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new PresenceChannel('chat.' . $this->message->chat_id),
+        ];
+    }
+
+    /**
+     * The event's broadcast name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'message.sent';
+    }
+
+    /**
+     * Get the data to broadcast.
+     */
     public function broadcastWith(): array
     {
         return [
             'id' => $this->message->id,
             'chat_id' => $this->message->chat_id,
             'user_id' => $this->message->user_id,
+            'user_name' => $this->message->user->name,
             'message' => $this->message->message,
             'type' => $this->message->type,
-            'metadata' => $this->message->metadata,
+            'metadata_parsed' => json_decode($this->message->metadata),
+            'read' => $this->message->read,
             'created_at' => $this->message->created_at->toISOString(),
-            'user' => [
-                'id' => $this->message->user->id,
-                'name' => $this->message->user->name,
-                'avatar' => $this->message->user->avatar ?? 'https://ui-avatars.com/api/?name=' . urlencode($this->message->user->name),
-            ],
+            'formatted_time' => $this->message->created_at->format('H:i'),
         ];
     }
 }

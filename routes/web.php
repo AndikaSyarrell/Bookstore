@@ -10,6 +10,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\UserController;
@@ -51,16 +52,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings', 'showSettings')->name('settings');
         Route::post('/settings/update', 'updateSettings')->name('settings.update');
 
-        Route::get('/book-detail', 'showBookDetails')->name('book.details');
+        // Route::get('/book-detail', 'showBookDetails')->name('book.details');
 
         Route::get('/cart', 'showCart')->name('cart');
-        Route::get('/cart/checkout', 'showcheckout')->name('cart.checkout');
-        Route::get('/cart/checkout/payment', 'showPayment')->name('cart.checkout.payment');
 
         Route::get('/chats', 'showChats')->name('chats');
-
-        Route::get('/track', 'showTracks')->name('tracks');
     });
+
+    Route::get('/home/products/{id}', [ProductsController::class, 'show'])->name('products.show');
+    
 
     Route::prefix('/home/cart')->controller(CartController::class)->group(function () {
         Route::get('/get', 'getCart')->name('cart.get');
@@ -70,36 +70,44 @@ Route::middleware('auth')->group(function () {
         Route::post('/checkout/process', [OrderController::class, 'processCheckout'])->name('checkout.process');
     });
 
-     // Checkout process
-    Route::prefix('/home/profile')->controller(BuyerProfileController::class)->group(function(){
-        Route::get('/get','show')->name('Bprofile.show');
-        Route::put('/update}','update')->name('Bprofile.update');
-        Route::post('/update-photo','updatePhoto')->name('Bprofile.update-photo');
-        Route::put('/update/password','updatePassword')->name('Bprofile.update-password');
-        Route::delete('/remove-photo','deletePhoto')->name('Bprofile.remove-photo');
+    // Checkout process
+    Route::prefix('/home/profile')->controller(BuyerProfileController::class)->group(function () {
+        Route::get('/get', 'show')->name('Bprofile.show');
+        Route::put('/update}', 'update')->name('Bprofile.update');
+        Route::post('/update-photo', 'updatePhoto')->name('Bprofile.update-photo');
+        Route::put('/update/password', 'updatePassword')->name('Bprofile.update-password');
+        Route::delete('/remove-photo', 'deletePhoto')->name('Bprofile.remove-photo');
     });
 
     Route::prefix('/home/orders')->controller(OrderController::class)->group(function () {
         // List orders
         Route::get('/', 'index')->name('order.index');
-        
+
         // View order detail
         Route::get('/{id}', 'show')->name('order.show');
-        
+
         // Upload payment proof (Buyer)
         Route::post('/{id}/upload-proof', 'uploadPaymentProof')->name('order.upload-proof');
-        
+
         // Verify payment (Seller)
         Route::post('/{id}/verify-payment', 'verifyPayment')->name('order.verify-payment');
-        
+
         // Update order status (Seller)
         Route::post('/{id}/update-status', 'updateStatus')->name('order.update-status');
-        
+
         // Cancel order (Buyer)
         Route::post('/{id}/cancel', 'cancel')->name('order.cancel');
+
+        Route::post('/{id}/upload-receipt', 'uploadShippingReceipt')->name('order.upload-receipt');
+
+        Route::put('/{id}/update-shipment', 'updateShipmentInfo')->name('order.update-shipment');
+
+        Route::post('/{id}/confirm-delivery', 'confirmDelivery')->name('order.confirm-delivery');
+
+        Route::get('/{id}/tracking', 'getTrackingInfo')->name('order.tracking');
     });
 
-    
+
     //dashboard admin and seller
     Route::prefix('/dashboard')->controller(DashboardController::class)->group(function () {
         Route::get('/profile', 'showProfile')->name('profile');
@@ -150,9 +158,51 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}/delete', 'destroy')->name('users.delete');
     });
 
-    Route::prefix('/dashboard/chats')->controller(MessageController::class)->group(function () {
-        Route::get('/receive/{chat}', 'getMessages')->name('messages.show');
-        Route::post('/sent/{chat}', 'store')->name('messages.store');
+    Route::prefix('/chats')->controller(ChatController::class)->group(function () {
+        
+    // Chat list
+    Route::get('/', 'index')->name('chats.index');
+    
+    // Start chat with product context
+    Route::get('/start', 'startChat')->name('chats.start');
+    // Route::get('/receive/{chat}', 'getMessages')->name('messages.');
+    // Route::post('/sent/{chat}', 'store')->name('messages.store');
+    
+    // Chat detail/conversation
+    Route::get('/{id}', 'show')->name('messages.show');
+    
+    // Send message (with broadcasting)
+    Route::post('/{id}/send', 'sendMessage')->name('chats.send');
+    
+    // Typing indicator (with broadcasting)
+    Route::post('/{id}/typing', 'typing')->name('typing');
+    
+    // Mark messages as read (with broadcasting)
+    Route::post('/{id}/mark-read', 'markAsRead')->name('mark-read');
+
+    });
+
+    Route::prefix('/notifications')->controller(NotificationController::class)->name('notifications.')->group(function(){
+        // Notification page
+    Route::get('/', 'index')->name('index');
+    
+    // Get recent notifications (for bell dropdown)
+    Route::get('/recent', 'recent')->name('recent');
+    
+    // Get unread count
+    Route::get('/unread-count', 'unreadCount')->name('unread-count');
+    
+    // Mark as read
+    Route::post('/{id}/read', 'markAsRead')->name('mark-read');
+    
+    // Mark all as read
+    Route::post('/mark-all-read', 'markAllAsRead')->name('mark-all-read');
+    
+    // Delete notification
+    Route::delete('/{id}', 'destroy')->name('destroy');
+    
+    // Delete all read
+    Route::delete('/delete-all-read', 'deleteAllRead')->name('delete-all-read');
     });
 });
 

@@ -7,6 +7,7 @@ use App\Models\OrderDetail;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\CartItem;
+use App\Models\Shipment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -39,11 +40,11 @@ class OrderController extends Controller
         ]);
 
         DB::beginTransaction();
-        
+
         try {
             $user = Auth::user();
             $items = collect($request->items);
-            
+
             // Group items by seller
             $itemsBySeller = $items->groupBy(function ($item) {
                 $product = Product::find($item['product_id']);
@@ -58,7 +59,7 @@ class OrderController extends Controller
                 $sellerSubtotal = $sellerItems->sum(function ($item) {
                     return $item['quantity'] * $item['price'];
                 });
-                
+
                 $sellerTax = $sellerSubtotal * 0.11; // 11% tax
                 $sellerShipping = 15000; // Flat rate per seller
                 $sellerTotal = $sellerSubtotal + $sellerTax + $sellerShipping;
@@ -89,7 +90,7 @@ class OrderController extends Controller
 
                     // Remove from cart
                     CartItem::where('id', $item['cart_item_id'])->delete();
-                    
+
                     // Reduce stock
                     $product = Product::find($item['product_id']);
                     $product->decrement('stock', $item['quantity']);
@@ -122,19 +123,18 @@ class OrderController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Order placed successfully',
-                    'redirect_url' => route('buyer.orders.show', $createdOrders[0]['order_id'])
+                    'redirect_url' => route('order.show', ['id' => $createdOrders[0]['order_id']])
                 ]);
             } else {
                 return response()->json([
                     'success' => true,
                     'message' => count($createdOrders) . ' orders placed successfully',
-                    'redirect_url' => route('buyer.orders.index')
+                    'redirect_url' => route('order.index')
                 ]);
             }
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to process checkout: ' . $e->getMessage()
@@ -148,11 +148,12 @@ class OrderController extends Controller
     public function show($id)
     {
         $order = Order::with(['buyer', 'seller', 'orderDetails.product', 'payment'])
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('buyer_id', Auth::id())
-                      ->orWhere('seller_id', Auth::id());
+                    ->orWhere('seller_id', Auth::id());
             })
             ->findOrFail($id);
+        // dd($order);
 
         return view('buyer.orders.show', compact('order'));
     }
@@ -163,7 +164,7 @@ class OrderController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         if ($user->role->name === 'buyer') {
             $orders = Order::where('buyer_id', $user->id)
                 ->with(['seller', 'payment'])
@@ -225,7 +226,6 @@ class OrderController extends Controller
                 'message' => 'Payment proof uploaded successfully',
                 'payment' => $payment
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -274,7 +274,6 @@ class OrderController extends Controller
                 'message' => $message,
                 'order' => $order->load('payment')
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -306,7 +305,6 @@ class OrderController extends Controller
                 'message' => 'Order status updated',
                 'order' => $order
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -332,7 +330,7 @@ class OrderController extends Controller
             }
 
             // Return stock
-            foreach ($order->details as $detail) {
+            foreach ($order->orderDetails as $detail) {
                 $detail->product->increment('stock', $detail->quantity);
             }
 
@@ -343,7 +341,6 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => 'Order cancelled successfully'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -366,5 +363,176 @@ class OrderController extends Controller
     private function generateTransactionId()
     {
         return 'TRX-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -8));
+    }
+
+    public function uploadShippingReceipt(Request $request, $orderId)
+    {
+        $request->validate([
+            'receipt_image' => 'required|image|mimes:jpeg,png,jpg,pdf|max:3072', // 3MB
+            'tracking_number' => 'nullable|string|max:100',
+            'carrier' => 'required|string|max:100',
+            'tracking_url' => 'nullable|url|max:255',
+            'estimated_delivery' => 'nullable|date|after:today',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            $order = Order::where('seller_id', Auth::id())->findOrFail($orderId);
+
+            // Check if order can be shipped
+            if (!in_array($order->status, ['processing'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order must be in processing status to ship'
+                ], 400);
+            }
+
+            // Upload receipt image
+            $file = $request->file('receipt_image');
+            $filename = 'receipt_' . $order->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('shipment-receipts', $filename, 'public');
+
+            // Create or update shipment
+            $shipment = Shipment::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'tracking_number' => $request->tracking_number,
+                    'tracking_url' => $request->tracking_url,
+                    'carrier' => $request->carrier,
+                    'receipt_image' => $filename,
+                    'notes' => $request->notes,
+                    'shipped_date' => now(),
+                    'estimated_delivery' => $request->estimated_delivery,
+                ]
+            );
+
+            // Update order status
+            $order->update(['status' => 'shipped']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Shipping receipt uploaded successfully',
+                'shipment' => $shipment,
+                'order' => $order
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload receipt: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update shipment info (Seller)
+     */
+    public function updateShipmentInfo(Request $request, $orderId)
+    {
+        $request->validate([
+            'tracking_number' => 'nullable|string|max:100',
+            'carrier' => 'required|string|max:100',
+            'tracking_url' => 'nullable|url|max:255',
+            'estimated_delivery' => 'nullable|date',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            $order = Order::where('seller_id', Auth::id())->findOrFail($orderId);
+            $shipment = $order->shipment;
+
+            if (!$shipment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Shipment not found'
+                ], 404);
+            }
+
+            $shipment->update($request->only([
+                'tracking_number',
+                'carrier',
+                'tracking_url',
+                'estimated_delivery',
+                'notes'
+            ]));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Shipment info updated',
+                'shipment' => $shipment
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update shipment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Confirm delivery (Buyer or Auto after 7 days)
+     */
+    public function confirmDelivery(Request $request, $orderId)
+    {
+        try {
+            $order = Order::where('buyer_id', Auth::id())->findOrFail($orderId);
+
+            if ($order->status !== 'shipped') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order is not in shipped status'
+                ], 400);
+            }
+
+            // Update order status
+            $order->update(['status' => 'delivered']);
+
+            // Update shipment delivery date
+            if ($order->shipment) {
+                $order->shipment->update(['delivery_date' => now()]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Delivery confirmed successfully',
+                'order' => $order
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to confirm delivery: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get shipment tracking info
+     */
+    public function getTrackingInfo($orderId)
+    {
+        try {
+            $order = Order::with('shipment')
+                ->where(function ($query) {
+                    $query->where('buyer_id', Auth::id())
+                        ->orWhere('seller_id', Auth::id());
+                })
+                ->findOrFail($orderId);
+
+            if (!$order->shipment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No shipment info available'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'shipment' => $order->shipment
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get tracking info: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
