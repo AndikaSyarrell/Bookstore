@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Events\MessageSent;
 use App\Events\MessageRead;
 use App\Events\UserTyping;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -190,6 +191,13 @@ class ChatController extends Controller
 
         // Broadcast the message to other users
         broadcast(new MessageSent($message))->toOthers();
+
+        // ✅ NEW: Send notification to recipient
+        $recipientId = (Auth::id() === $chat->buyer_id)
+            ? $chat->seller_id
+            : $chat->buyer_id;
+
+        NotificationService::notifyNewMessage($message, $recipientId);
 
         return response()->json([
             'success' => true,

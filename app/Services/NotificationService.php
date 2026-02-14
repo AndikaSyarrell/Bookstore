@@ -43,7 +43,7 @@ class NotificationService
                 'order_number' => $order->order_number,
                 'total' => $order->total_amount,
             ],
-            route('orders.show', $order->id)
+            route('order.show', $order->id)
         );
     }
 
@@ -80,7 +80,7 @@ class NotificationService
                 'order_number' => $order->order_number,
                 'status' => $status,
             ],
-            route('orders.show', $order->id)
+            route('order.show', $order->id)
         );
     }
 
@@ -99,7 +99,7 @@ class NotificationService
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                 ],
-                route('orders.show', $order->id)
+                route('order.show', $order->id)
             );
         } else {
             return self::create(
@@ -111,7 +111,7 @@ class NotificationService
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                 ],
-                route('orders.show', $order->id)
+                route('order.show', $order->id)
             );
         }
     }
@@ -138,7 +138,7 @@ class NotificationService
                 'carrier' => $carrier,
                 'tracking_number' => $trackingNumber,
             ],
-            route('orders.show', $order->id)
+            route('order.show', $order->id)
         );
     }
 
@@ -160,7 +160,7 @@ class NotificationService
                 'sender_id' => $sender->id,
                 'sender_name' => $sender->name,
             ],
-            route('chats.show', $message->chat_id)
+            route('messages.show', $message->chat_id)
         );
     }
 

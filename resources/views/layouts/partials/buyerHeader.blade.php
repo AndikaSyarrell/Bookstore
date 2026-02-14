@@ -25,7 +25,7 @@
 
             <div class="flex items-center">
                 <!-- message -->
-                @include('layouts.partials.buttons.message')
+                <!-- @include('layouts.partials.buttons.message') -->
 
                 <!-- Notifications -->
                 @include('layouts.partials.buttons.notification')

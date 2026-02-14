@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\CartItem;
 use App\Models\Shipment;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +107,9 @@ class OrderController extends Controller
                     'transaction_id' => $this->generateTransactionId(),
                     'expired_at' => now()->addHours(24) // 24 hours to pay
                 ]);
+
+                // Send notification to seller
+                NotificationService::notifyNewOrder($order);
 
                 $createdOrders[] = [
                     'order_id' => $order->id,
@@ -221,6 +225,19 @@ class OrderController extends Controller
             // Update order status
             $order->update(['status' => 'pending_verification']);
 
+            // Notify seller new payment proof
+            NotificationService::create(
+                $order->seller_id,
+                'payment_pending',
+                'New Payment Proof Uploaded',
+                "Payment proof for order #{$order->order_number} is ready for verification",
+                [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                ],
+                route('orders.show', $order->id)
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Payment proof uploaded successfully',
@@ -257,6 +274,10 @@ class OrderController extends Controller
 
                 $order->update(['status' => 'processing']);
 
+                // Notify buyer payment approved
+                NotificationService::notifyPaymentVerified($order, true);
+                NotificationService::notifyOrderStatus($order, 'processing');
+
                 $message = 'Payment verified successfully';
             } else {
                 $payment->update([
@@ -265,6 +286,8 @@ class OrderController extends Controller
                 ]);
 
                 $order->update(['status' => 'payment_rejected']);
+
+                NotificationService::notifyPaymentVerified($order, false);
 
                 $message = 'Payment rejected';
             }
@@ -409,6 +432,13 @@ class OrderController extends Controller
             // Update order status
             $order->update(['status' => 'shipped']);
 
+            // Notify buyer order shipped
+            NotificationService::notifyOrderShipped(
+                $order,
+                $request->carrier,
+                $request->tracking_number
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Shipping receipt uploaded successfully',
@@ -490,6 +520,18 @@ class OrderController extends Controller
             if ($order->shipment) {
                 $order->shipment->update(['delivery_date' => now()]);
             }
+
+            NotificationService::create(
+                $order->seller_id,
+                'order_delivered',
+                'Order Delivered ✓',
+                "Order #{$order->order_number} has been delivered to customer",
+                [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                ],
+                route('order.show', $order->id)
+            );
 
             return response()->json([
                 'success' => true,

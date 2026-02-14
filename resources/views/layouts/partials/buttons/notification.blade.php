@@ -1,4 +1,4 @@
-<!-- Notification Bell Component -->
+<!-- Notification Bell Component - NO DUPLICATES VERSION -->
 <!-- Add this to your navbar in layouts/app.blade.php -->
 
 <div 
@@ -73,7 +73,8 @@
                 </div>
             </template>
 
-            <template x-for="notification in notifications" :key="notification.id">
+            <!-- ✅ FIX: Use index in key to prevent duplicates -->
+            <template x-for="(notification, index) in notifications" :key="`notif-${notification.id}-${index}`">
                 <a 
                     :href="notification.action_url || '#'"
                     @click="markAsRead(notification.id)"
@@ -86,29 +87,7 @@
                             class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                             :class="`bg-${notification.color}-100`"
                         >
-                            <svg class="w-5 h-5" :class="`text-${notification.color}-600`" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <!-- Dynamic icon based on type -->
-                                <template x-if="notification.icon === 'shopping-cart'">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </template>
-                                <template x-if="notification.icon === 'package'">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                </template>
-                                <template x-if="notification.icon === 'check-circle'">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </template>
-                                <template x-if="notification.icon === 'message-circle'">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                                </template>
-                                <template x-if="notification.icon === 'truck'">
-                                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                                </template>
-                                <!-- Default bell icon -->
-                                <template x-if="!['shopping-cart', 'package', 'check-circle', 'message-circle', 'truck'].includes(notification.icon)">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                                </template>
-                            </svg>
+                            <div x-html="getIconSvg(notification.icon, notification.color)"></div>
                         </div>
 
                         <!-- Content -->
@@ -141,7 +120,7 @@
 function notificationBell() {
     return {
         showDropdown: false,
-        notifications: [],
+        notifications: [],  // ✅ Initialize as empty array
         unreadCount: 0,
         channel: null,
 
@@ -160,10 +139,14 @@ function notificationBell() {
                 });
 
                 const data = await response.json();
-                this.notifications = data.notifications;
-                this.unreadCount = data.unread_count;
+                // ✅ Safe assignment with fallback
+                this.notifications = data.notifications || [];
+                this.unreadCount = data.unread_count || 0;
             } catch (error) {
                 console.error('Failed to load notifications:', error);
+                // ✅ Ensure array is set even on error
+                this.notifications = [];
+                this.unreadCount = 0;
             }
         },
 
@@ -171,6 +154,13 @@ function notificationBell() {
             // Listen to private notification channel
             this.channel = window.Echo.private(`notifications.{{ Auth::id() }}`)
                 .listen('.notification.new', (e) => {
+                    // ✅ Check for duplicates before adding
+                    const exists = this.notifications.some(n => n.id === e.id);
+                    if (exists) {
+                        console.log('Notification already exists, skipping duplicate');
+                        return;
+                    }
+
                     // Add new notification to top
                     this.notifications.unshift(e);
                     
@@ -196,6 +186,7 @@ function notificationBell() {
             this.showDropdown = !this.showDropdown;
             
             if (this.showDropdown) {
+                // ✅ Reload when opening to get fresh data
                 this.loadNotifications();
             }
         },
@@ -239,8 +230,35 @@ function notificationBell() {
             }
         },
 
+        getIconSvg(icon, color) {
+            const colorClass = `text-${color}-600`;
+            const svgBase = `<svg class="w-5 h-5 ${colorClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">`;
+            
+            const icons = {
+                'shopping-cart': `${svgBase}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`,
+                
+                'package': `${svgBase}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`,
+                
+                'check-circle': `${svgBase}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+                
+                'x-circle': `${svgBase}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+                
+                'message-circle': `${svgBase}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>`,
+                
+                'truck': `${svgBase}<path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>`,
+                
+                'check-square': `${svgBase}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+                
+                'slash': `${svgBase}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>`
+            };
+            
+            // Default bell icon
+            const defaultIcon = `${svgBase}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>`;
+            
+            return icons[icon] || defaultIcon;
+        },
+
         showBrowserNotification(notification) {
-            // Request permission if needed
             if ('Notification' in window && Notification.permission === 'granted') {
                 new Notification(notification.title, {
                     body: notification.message,
