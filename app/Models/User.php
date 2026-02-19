@@ -54,14 +54,34 @@ class User extends Authenticatable
         return $this->hasMany(Category::class);
     }
 
-    public function isBuyer(): HasMany
+    public function bankAccount()
     {
-        return $this->hasMany(Chat::class, 'buyer_id');
+        return $this->hasMany(BankAccount::class);
     }
 
-    public function isSeller(): HasMany
+    public function primaryBankAccount()
     {
-        return $this->hasMany(Chat::class, 'seller_id');
+        return $this->hasOne(BankAccount::class)->where('is_primary', true);
+    }
+
+    public function sellerOrders()
+    {
+        return $this->hasMany(Order::class, 'seller_id');
+    }
+
+    public function isBuyer()
+    {
+        return $this->role->name === 'buyer';
+    }
+
+    public function isSeller()
+    {
+        return $this->role->name === 'seller';
+    }
+
+    public function isMaster()
+    {
+        return $this->role->name === 'Master';
     }
 
     public function message(): HasMany

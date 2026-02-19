@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\SellerProfileController;
 use App\Http\Controllers\UserController;
 use App\Models\Message;
 use Illuminate\Support\Facades\Route;
@@ -60,7 +61,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/home/products/{id}', [ProductsController::class, 'show'])->name('products.show');
-    
+
 
     Route::prefix('/home/cart')->controller(CartController::class)->group(function () {
         Route::get('/get', 'getCart')->name('cart.get');
@@ -128,6 +129,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/chats', 'showChats')->name('chats');
     });
 
+
+
     Route::prefix('/dashboard/categories')->controller(CategoryController::class)->group(function () {
         Route::post('/store', 'store')->name('categories.store');
         Route::post('/{category}/update', 'update')->name('categories.update');
@@ -150,6 +153,27 @@ Route::middleware('auth')->group(function () {
         Route::post('/delete', 'destroy')->name('profile.delete');
     });
 
+
+
+    Route::prefix('/dashboard/profile-seller')->controller(SellerProfileController::class)->name('sellerProfile.')->group(function () {
+        Route::get('/', 'index')->name('index');
+
+        // Update profile
+        Route::post('/profile', 'updateProfile')->name('update');
+
+        // Update photo
+        Route::post('/profile/photo', 'updatePhoto')->name('photo');
+
+        // Change password
+        Route::post('/profile/password', 'changePassword')->name('password');
+
+        // Bank account management
+        Route::post('/profile/bank', 'addBankAccount')->name('bank.add');
+        Route::put('/profile/bank/{id}', 'updateBankAccount')->name('bank.update');
+        Route::post('/profile/bank/{id}/primary', 'setPrimaryBankAccount')->name('bank.primary');
+        Route::delete('/profile/bank/{id}', 'deleteBankAccount')->name('bank.delete');
+    });
+
     Route::prefix('/dashboard/users')->controller(UserController::class)->group(function () {
         Route::get('/create', 'create')->name('users.create');
         Route::post('/store', 'store')->name('users.store');
@@ -159,50 +183,49 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('/chats')->controller(ChatController::class)->group(function () {
-        
-    // Chat list
-    Route::get('/', 'index')->name('chats.index');
-    
-    // Start chat with product context
-    Route::get('/start', 'startChat')->name('chats.start');
-    // Route::get('/receive/{chat}', 'getMessages')->name('messages.');
-    // Route::post('/sent/{chat}', 'store')->name('messages.store');
-    
-    // Chat detail/conversation
-    Route::get('/{id}', 'show')->name('messages.show');
-    
-    // Send message (with broadcasting)
-    Route::post('/{id}/send', 'sendMessage')->name('chats.send');
-    
-    // Typing indicator (with broadcasting)
-    Route::post('/{id}/typing', 'typing')->name('typing');
-    
-    // Mark messages as read (with broadcasting)
-    Route::post('/{id}/mark-read', 'markAsRead')->name('mark-read');
 
+        // Chat list
+        Route::get('/', 'index')->name('chats.index');
+
+        // Start chat with product context
+        Route::get('/start', 'startChat')->name('chats.start');
+        // Route::get('/receive/{chat}', 'getMessages')->name('messages.');
+        // Route::post('/sent/{chat}', 'store')->name('messages.store');
+
+        // Chat detail/conversation
+        Route::get('/{id}', 'show')->name('messages.show');
+
+        // Send message (with broadcasting)
+        Route::post('/{id}/send', 'sendMessage')->name('chats.send');
+
+        // Typing indicator (with broadcasting)
+        Route::post('/{id}/typing', 'typing')->name('typing');
+
+        // Mark messages as read (with broadcasting)
+        Route::post('/{id}/mark-read', 'markAsRead')->name('mark-read');
     });
 
-    Route::prefix('/notifications')->controller(NotificationController::class)->name('notifications.')->group(function(){
+    Route::prefix('/notifications')->controller(NotificationController::class)->name('notifications.')->group(function () {
         // Notification page
-    Route::get('/', 'index')->name('index');
-    
-    // Get recent notifications (for bell dropdown)
-    Route::get('/recent', 'recent')->name('recent');
-    
-    // Get unread count
-    Route::get('/unread-count', 'unreadCount')->name('unread-count');
-    
-    // Mark as read
-    Route::post('/{id}/read', 'markAsRead')->name('mark-read');
-    
-    // Mark all as read
-    Route::post('/mark-all-read', 'markAllAsRead')->name('mark-all-read');
-    
-    // Delete notification
-    Route::delete('/{id}', 'destroy')->name('destroy');
-    
-    // Delete all read
-    Route::delete('/delete-all-read', 'deleteAllRead')->name('delete-all-read');
+        Route::get('/', 'index')->name('index');
+
+        // Get recent notifications (for bell dropdown)
+        Route::get('/recent', 'recent')->name('recent');
+
+        // Get unread count
+        Route::get('/unread-count', 'unreadCount')->name('unread-count');
+
+        // Mark as read
+        Route::post('/{id}/read', 'markAsRead')->name('mark-read');
+
+        // Mark all as read
+        Route::post('/mark-all-read', 'markAllAsRead')->name('mark-all-read');
+
+        // Delete notification
+        Route::delete('/{id}', 'destroy')->name('destroy');
+
+        // Delete all read
+        Route::delete('/delete-all-read', 'deleteAllRead')->name('delete-all-read');
     });
 });
 
