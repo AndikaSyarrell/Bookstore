@@ -5,9 +5,9 @@
             <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Main Menu
             </h3>
-            
-            <a href="{{ route('dashboard') }}" 
-               class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
+
+            <a href="{{ route('dashboard') }}"
+                class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('dashboard') 
                           ? 'bg-indigo-600 text-white shadow-md' 
                           : 'text-gray-700 hover:bg-gray-100' }}">
@@ -18,8 +18,8 @@
             </a>
 
             @if (auth()->check() && auth()->user()->role->name === 'seller')
-            <a href="{{ route('products') }}" 
-               class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
+            <a href="{{ route('products') }}"
+                class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('products') || request()->routeIs('products.*')
                           ? 'bg-indigo-600 text-white shadow-md' 
                           : 'text-gray-700 hover:bg-gray-100' }}">
@@ -29,8 +29,8 @@
                 <span class="font-medium">Products</span>
             </a>
             @elseif(auth()->check() && auth()->user()->role->name === 'master')
-            <a href="{{ route('users') }}" 
-               class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
+            <a href="{{ route('users') }}"
+                class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('user') 
                           ? 'bg-indigo-600 text-white shadow-md' 
                           : 'text-gray-700 hover:bg-gray-100' }}">
@@ -52,82 +52,93 @@
                 </svg>
                 <span class="font-medium">Posts</span>
             </a> -->
-            
 
-        <!-- Content Section -->
-        <div class="mb-6">
-            <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                Content
-            </h3>
 
-            @if(auth()->check() && auth()->user()->role->name === 'seller')
-            <a href="{{ route('preorders') }}"
-               class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
+            <!-- Content Section -->
+            <div class="mb-6">
+                <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    Content
+                </h3>
+
+                @if(auth()->check() && auth()->user()->role->name === 'seller')
+                <a href="{{ route('preorders') }}"
+                    class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('preorders.*') || request()->routeIs('preorders')
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'text-gray-700 hover:bg-gray-100' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                </svg>
-                <span class="font-medium">Preorder</span>
-            </a>
-            @elseif(auth()->check() && auth()->user()->role->name === 'master')
-            <a href="{{ route('categories') }}" 
-               class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <span class="font-medium">Preorder</span>
+                </a>
+                <a href="{{ route('chats.index') }}"
+                    class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
+                      {{ request()->routeIs('preorders.*') || request()->routeIs('preorders')
+                          ? 'bg-indigo-600 text-white shadow-md'
+                          : 'text-gray-700 hover:bg-gray-100' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24">
+                        <path fill="rgb(75, 85, 99)" d="M5 18v3.766l1.515-.909L11.277 18H16c1.103 0 2-.897 2-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h12v8h-5.277L7 18.234V16H4z" />
+                        <path fill="rgb(75, 85, 99)" d="M20 2H8c-1.103 0-2 .897-2 2h12c1.103 0 2 .897 2 2v8c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2" />
+                        </svg>
+                            <span class="font-medium">Chats</span>
+                </a>
+                @elseif(auth()->check() && auth()->user()->role->name === 'master')
+                <a href="{{ route('categories') }}"
+                    class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('categories.*') || request()->routeIs('categories')
                           ? 'bg-indigo-600 text-white shadow-md' 
                           : 'text-gray-700 hover:bg-gray-100' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                </svg>
-                <span class="font-medium">Categories</span>
-            </a>
-            @endif
-            
-        </div>
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <span class="font-medium">Categories</span>
+                </a>
+                @endif
 
-        <!-- Settings Section -->
-        <div class="mb-6">
-            <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                Settings
-            </h3>
-            
-            <a href="#" 
-               class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
+            </div>
+
+            <!-- Settings Section -->
+            <div class="mb-6">
+                <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    Settings
+                </h3>
+
+                <a href="#"
+                    class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('settings.general') 
                           ? 'bg-indigo-600 text-white shadow-md' 
                           : 'text-gray-700 hover:bg-gray-100' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                <span class="font-medium">General</span>
-            </a>
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="font-medium">General</span>
+                </a>
 
-            <a href="{{ route('profile') }}" 
-               class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
+                <a href="{{ auth()->user()->role === 'master' ? route('masterProfile') : route('sellerProfile.index') }}"
+                    class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('settings.profile') 
                           ? 'bg-indigo-600 text-white shadow-md' 
                           : 'text-gray-700 hover:bg-gray-100' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <span class="font-medium">Profile</span>
-            </a>
-        </div>
-
-        <!-- Logout Button -->
-        <div class="mt-8 pt-6 border-t border-gray-200">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" 
-                        class="flex items-center w-full px-4 py-3 rounded-lg transition-colors duration-200 text-red-600 hover:bg-red-50">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
-                    <span class="font-medium">Logout</span>
-                </button>
-            </form>
-        </div>
+                    <span class="font-medium">Profile</span>
+                </a>
+            </div>
+
+            <!-- Logout Button -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit"
+                        class="flex items-center w-full px-4 py-3 rounded-lg transition-colors duration-200 text-red-600 hover:bg-red-50">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span class="font-medium">Logout</span>
+                    </button>
+                </form>
+            </div>
     </nav>
 </aside>

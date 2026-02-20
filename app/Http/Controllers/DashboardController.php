@@ -10,6 +10,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Category;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Pagination\Paginator;
 
 class DashboardController extends Controller
@@ -21,6 +22,101 @@ class DashboardController extends Controller
         } else {
             return view('errors.index', ['message' => 'unauthorized']);
         }
+    }
+
+    public function sellerDashboard()
+    {
+        {
+        $sellerId = Auth::id();
+
+        // Statistics
+        $stats = [
+            // Products
+            'total_products' => Product::where('seller_id', $sellerId)->count(),
+            'active_products' => Product::where('seller_id', $sellerId)->where('stock', '>', 0)->count(),
+            'out_of_stock' => Product::where('seller_id', $sellerId)->where('stock', 0)->count(),
+            'low_stock' => Product::where('seller_id', $sellerId)->whereBetween('stock', [1, 5])->count(),
+
+            // Orders
+            'total_orders' => Order::where('seller_id', $sellerId)->count(),
+            'pending_orders' => Order::where('seller_id', $sellerId)
+                ->whereIn('status', ['pending_payment', 'pending_verification'])
+                ->count(),
+            'processing_orders' => Order::where('seller_id', $sellerId)
+                ->where('status', 'processing')
+                ->count(),
+            'completed_orders' => Order::where('seller_id', $sellerId)
+                ->where('status', 'delivered')
+                ->count(),
+
+            // Revenue
+            'total_revenue' => Order::where('seller_id', $sellerId)
+                ->where('status', 'delivered')
+                ->sum('total_amount'),
+            'pending_revenue' => Order::where('seller_id', $sellerId)
+                ->whereIn('status', ['pending_verification', 'processing', 'shipped'])
+                ->sum('total_amount'),
+            'monthly_revenue' => Order::where('seller_id', $sellerId)
+                ->where('status', 'delivered')
+                ->whereMonth('created_at', now()->month)
+                ->sum('total_amount'),
+        ];
+        // dd($stats);
+
+        // Recent Orders
+        $recentOrders = Order::where('seller_id', $sellerId)
+            ->with(['buyer', 'orderDetails'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Top Selling Products
+        $topProducts = Product::where('seller_id', $sellerId)
+            ->withCount(['orderDetails as total_sold' => function($query) {
+                $query->select(DB::raw('SUM(quantity)'));
+            }])
+            ->orderBy('total_sold', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Low Stock Products
+        $lowStockProducts = Product::where('seller_id', $sellerId)
+            ->where('stock', '>', 0)
+            ->where('stock', '<=', 5)
+            ->orderBy('stock', 'asc')
+            ->limit(5)
+            ->get();
+
+        // Revenue Chart Data (Last 7 days)
+        $revenueData = Order::where('seller_id', $sellerId)
+            ->where('status', 'delivered')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(total_amount) as revenue'),
+                DB::raw('COUNT(*) as orders')
+            )
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // Orders by Status
+        $ordersByStatus = Order::where('seller_id', $sellerId)
+            ->select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->get()
+            ->pluck('count', 'status');
+
+        return view('dashboard.index', compact(
+            'stats',
+            'recentOrders',
+            'topProducts',
+            'lowStockProducts',
+            'revenueData',
+            'ordersByStatus'
+        ));
+    }
+
     }
 
     public function showProducts()

@@ -84,27 +84,118 @@
 
                     @if($order->status === 'pending_payment' || $order->status === 'payment_rejected')
                     <!-- Bank Account Info -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <h3 class="text-sm font-semibold text-blue-900 mb-3">Transfer ke Rekening Penjual:</h3>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-blue-800">Bank:</span>
-                                <span class="font-semibold text-blue-900">BCA</span>
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Transfer Pembayaran ke Rekening Penjual</h3>
+
+                        @if($sellerBankAccounts && $sellerBankAccounts->count() > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+                            @foreach($sellerBankAccounts as $account)
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl p-5 hover:shadow-lg transition-all relative">
+                                <!-- Primary Badge -->
+                                @if($account->is_primary)
+                                <div class="absolute top-3 right-3">
+                                    <span class="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">
+                                        PRIMARY
+                                    </span>
+                                </div>
+                                @endif
+
+                                <!-- Bank Info -->
+                                <div class="mb-4">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="text-3xl">{{ $account->bank_logo }}</span>
+                                        <h4 class="font-bold text-blue-900 text-lg">{{ $account->bank_name }}</h4>
+                                    </div>
+
+                                    @if($account->is_verified)
+                                    <div class="flex items-center gap-1 text-xs text-green-700 mb-3">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                                        </svg>
+                                        <span class="font-semibold">Verified</span>
+                                    </div>
+                                    @endif
+                                </div>
+
+                                <!-- Account Details -->
+                                <div class="space-y-2 text-sm bg-white bg-opacity-50 rounded-lg p-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-blue-700 font-medium">Account Number:</span>
+                                        <button
+                                            class="flex items-center gap-1 font-mono font-bold text-blue-900 hover:text-blue-600 transition-colors"
+                                            title="Click to copy">
+                                            {{ $account->account_number }}
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div class="flex justify-between">
+                                        <span class="text-blue-700 font-medium">Account Name:</span>
+                                        <span class="font-semibold text-blue-900 text-right">{{ $account->account_holder_name }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Amount -->
+                                <div class="mt-4 pt-3 border-t-2 border-blue-300">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-blue-700 font-medium text-sm">Transfer Amount:</span>
+                                        <div class="text-right">
+                                            <button
+                                                class="font-bold text-blue-900 text-lg hover:text-blue-600 transition-colors flex items-center gap-1"
+                                                title="Click to copy">
+                                                Rp {{ number_format($order->total_amount, 0, ',', '.') }}
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Copy All Button -->
+                                <button
+                                    class="w-full mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    Copy All Details
+                                </button>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-blue-800">Account Number:</span>
-                                <span class="font-semibold text-blue-900">1234567890</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-blue-800">Account Name:</span>
-                                <span class="font-semibold text-blue-900">{{ $order->seller->name }}</span>
-                            </div>
-                            <div class="flex justify-between border-t border-blue-300 pt-2 mt-2">
-                                <span class="text-blue-800">Amount:</span>
-                                <span class="font-bold text-blue-900 text-lg">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
+                            @endforeach
+                        </div>
+
+                        <!-- Payment Instructions -->
+                        <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-yellow-900 mb-1">Payment Instructions:</h4>
+                                    <ul class="text-sm text-yellow-800 space-y-1">
+                                        <li>• Transfer <strong>exact amount</strong> (Rp {{ number_format($order->total_amount, 0, ',', '.') }}) to one of the accounts above</li>
+                                        <li>• You can choose any of the {{ $sellerBankAccounts->count() }} available accounts</li>
+                                        <li>• Save your payment receipt/proof</li>
+                                        <li>• Upload the proof after transfer is complete</li>
+                                        <li>• Payment will be verified by seller within 24 hours</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
+                        @else
+                        <!-- No Bank Accounts -->
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                            <svg class="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h3 class="font-bold text-red-900 mb-2">No Bank Account Available</h3>
+                            <p class="text-sm text-red-700">Seller has not added bank account yet. Please contact seller.</p>
+                        </div>
+                        @endif
                     </div>
+
 
                     @if($order->status === 'payment_rejected')
                     <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
@@ -547,7 +638,7 @@
             proofFile: null,
             proofNotes: '',
             isUploading: false,
-            orderId: {{$order->id}},
+            orderId: {{ $order-> id}},
 
             // Resi upload data - INTEGRATED
             showShippingModal: false,
@@ -794,5 +885,19 @@
     [x-cloak] {
         display: none !important;
     }
+    @keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+}
 </style>
 @endsection

@@ -303,94 +303,93 @@
 
         </div>
     </div>
-</div>
-
-<!-- Add/Edit Bank Modal -->
-<div 
-    x-show="showAddBankModal || showEditBankModal"
-    x-cloak
-    class="fixed inset-0 z-50 overflow-y-auto"
-    style="display: none;"
->
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-black bg-opacity-50" @click="showAddBankModal = false; showEditBankModal = false"></div>
-        
-        <div class="relative bg-white rounded-lg max-w-md w-full p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">
-                <span x-show="showAddBankModal">Add Bank Account</span>
-                <span x-show="showEditBankModal">Edit Bank Account</span>
-            </h3>
+    <!-- Add/Edit Bank Modal -->
+    <div 
+        x-show="showAddBankModal || showEditBankModal"
+        x-cloak
+        class="fixed inset-0 z-50 overflow-y-auto"
+    >
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="showAddBankModal = false; showEditBankModal = false"></div>
             
-            <form @submit.prevent="saveBankAccount()">
-                <!-- Bank Name -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
-                    <select 
-                        x-model="bankData.bank_name"
-                        required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="">Select bank...</option>
-                        @foreach(\App\Models\BankAccount::getAvailableBanks() as $code => $name)
-                        <option value="{{ $code }}">{{ $name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Account Number -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
-                    <input 
-                        type="text" 
-                        x-model="bankData.account_number"
-                        required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="1234567890"
-                    >
-                </div>
-
-                <!-- Account Holder Name -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
-                    <input 
-                        type="text" 
-                        x-model="bankData.account_holder_name"
-                        required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="As per bank records"
-                    >
-                </div>
-
-                <!-- Primary Account -->
-                <div x-show="showAddBankModal" class="mb-6">
-                    <label class="flex items-center gap-2">
-                        <input type="checkbox" x-model="bankData.is_primary" class="rounded">
-                        <span class="text-sm text-gray-700">Set as primary account</span>
-                    </label>
-                </div>
-
-                <!-- Buttons -->
-                <div class="flex gap-3">
-                    <button 
-                        type="submit"
-                        :disabled="isSavingBank"
-                        class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                        <span x-show="!isSavingBank">Save</span>
-                        <span x-show="isSavingBank">Saving...</span>
-                    </button>
-                    <button 
-                        type="button"
-                        @click="showAddBankModal = false; showEditBankModal = false"
-                        class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
-                    >
-                        Cancel
-                    </button>
-                </div>
-            </form>
+            <div class="relative bg-white rounded-lg max-w-md w-full p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-4">
+                    <span x-show="showAddBankModal">Add Bank Account</span>
+                    <span x-show="showEditBankModal">Edit Bank Account</span>
+                </h3>
+                
+                <form @submit.prevent="saveBankAccount()">
+                    <!-- Bank Name -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+                        <select 
+                            x-model="bankData.bank_name"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Select bank...</option>
+                            @foreach(\App\Models\BankAccount::getAvailableBanks() as $code => $name)
+                            <option value="{{ $code }}">{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+    
+                    <!-- Account Number -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+                        <input 
+                            type="text" 
+                            x-model="bankData.account_number"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            placeholder="1234567890"
+                        >
+                    </div>
+    
+                    <!-- Account Holder Name -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
+                        <input 
+                            type="text" 
+                            x-model="bankData.account_holder_name"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            placeholder="As per bank records"
+                        >
+                    </div>
+    
+                    <!-- Primary Account -->
+                    <div x-show="showAddBankModal" class="mb-6">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" x-model="bankData.is_primary" class="rounded">
+                            <span class="text-sm text-gray-700">Set as primary account</span>
+                        </label>
+                    </div>
+    
+                    <!-- Buttons -->
+                    <div class="flex gap-3">
+                        <button 
+                            type="submit"
+                            :disabled="isSavingBank"
+                            class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                        >
+                            <span x-show="!isSavingBank">Save</span>
+                            <span x-show="isSavingBank">Saving...</span>
+                        </button>
+                        <button 
+                            type="button"
+                            @click="showAddBankModal = false; showEditBankModal = false"
+                            class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
 
 <script>
 function sellerProfile() {

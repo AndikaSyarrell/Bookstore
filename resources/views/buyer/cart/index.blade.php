@@ -641,7 +641,7 @@
                         alert('Order placed successfully! Order ID: ' + data.order_id);
 
                         // Redirect to order detail or success page
-                        window.location.href = '{{ url("orders") }}/' + data.order_id;
+                        window.location.href = data.redirect_url;
                     } else {
                         const error = await response.json();
                         alert('Error: ' + (error.message || 'Failed to process checkout'));

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankAccount;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Payment;
@@ -127,7 +128,8 @@ class OrderController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Order placed successfully',
-                    'redirect_url' => route('order.show', ['id' => $createdOrders[0]['order_id']])
+                    'redirect_url' => route('order.show', ['id' => $createdOrders[0]['order_id']]),
+                    'order_id' => $createdOrders[0]['order_id']
                 ]);
             } else {
                 return response()->json([
@@ -149,7 +151,7 @@ class OrderController extends Controller
     /**
      * Show order detail
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $order = Order::with(['buyer', 'seller', 'orderDetails.product', 'payment'])
             ->where(function ($query) {
@@ -157,9 +159,14 @@ class OrderController extends Controller
                     ->orWhere('seller_id', Auth::id());
             })
             ->findOrFail($id);
-        // dd($order);
 
-        return view('buyer.orders.show', compact('order'));
+        $sellerBankAccounts = BankAccount::where('user_id', $order->seller_id)
+            ->orderBy('is_primary', 'desc') // Primary account first
+            ->orderBy('created_at', 'asc')
+            ->limit(3) // Show max 3 accounts
+            ->get();
+
+        return view('buyer.orders.show', compact('order', 'sellerBankAccounts'));
     }
 
     /**
@@ -235,7 +242,7 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                 ],
-                route('orders.show', $order->id)
+                route('order.show', $order->id)
             );
 
             return response()->json([
