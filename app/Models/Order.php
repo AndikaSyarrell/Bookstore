@@ -9,6 +9,7 @@ class Order extends Model
     protected $fillable = [
         'order_number',
         'seller_id',
+        'auto_cancel_at',
         'buyer_id',
         'order_date',
         'status',
@@ -30,6 +31,11 @@ class Order extends Model
 
     public function seller(){
         return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    public function refund()
+    {
+        return $this->hasOne(Refund::class);
     }
 
     public function payment(){

@@ -8,6 +8,7 @@ use App\Models\OrderDetail;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\CartItem;
+use App\Models\Refund;
 use App\Models\Shipment;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -72,6 +73,7 @@ class OrderController extends Controller
                     'buyer_id' => $user->id,
                     'seller_id' => $sellerId,
                     'order_date' => now(),
+                    'auto_cancel_at' => now()->addHours(12),
                     'status' => 'pending_payment',
                     'shipping_address' => json_encode($request->shipping_address),
                     'subtotal' => $sellerSubtotal,
@@ -152,22 +154,34 @@ class OrderController extends Controller
      * Show order detail
      */
     public function show(Request $request, $id)
-    {
-        $order = Order::with(['buyer', 'seller', 'orderDetails.product', 'payment'])
-            ->where(function ($query) {
-                $query->where('buyer_id', Auth::id())
-                    ->orWhere('seller_id', Auth::id());
-            })
-            ->findOrFail($id);
+{
+    $order = Order::with([
+            'buyer', 
+            'seller', 
+            'orderDetails.product', 
+            'payment',
+            'refund' // Add refund relationship
+        ])
+        ->where(function ($query) {
+            $query->where('buyer_id', Auth::id())
+                  ->orWhere('seller_id', Auth::id());
+        })
+        ->findOrFail($id);
 
-        $sellerBankAccounts = BankAccount::where('user_id', $order->seller_id)
-            ->orderBy('is_primary', 'desc') // Primary account first
-            ->orderBy('created_at', 'asc')
-            ->limit(3) // Show max 3 accounts
-            ->get();
+    // Get seller's bank accounts
+    $sellerBankAccounts = BankAccount::where('user_id', $order->seller_id)
+        ->orderBy('is_primary', 'desc') // Primary account first
+        ->orderBy('created_at', 'asc')
+        ->limit(3) // Show max 3 accounts
+        ->get();
 
-        return view('buyer.orders.show', compact('order', 'sellerBankAccounts'));
-    }
+    // Get refund data if exists
+    $refund = $order->refund; // Will be null if no refund
+
+    // dd($refund);
+
+    return view('buyer.orders.show', compact('order', 'sellerBankAccounts', 'refund'));
+}
 
     /**
      * List user's orders

@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\RefundController;
 use App\Http\Controllers\SellerProfileController;
 use App\Http\Controllers\UserController;
 use App\Models\Message;
@@ -46,6 +47,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', [BuyerController::class, 'index'])->name('homepage');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+    // View refund requests
+    Route::get('/refunds', [RefundController::class, 'sellerRefunds'])->name('seller.refunds');
+    // Approve/Reject refund
+    Route::post('/refunds/{refund}/approve', [RefundController::class, 'approveRefund'])->name('seller.refund.approve');
+    Route::post('/refunds/{refund}/reject', [RefundController::class, 'rejectRefund'])->name('seller. refund.reject');
+
+
+
+    // Refund dashboard
+    Route::get('/refunds', [RefundController::class, 'adminDashboard'])->name('refunds.dashboard');
+    // Complete refund (after manual transfer)
+    Route::post('/refunds/{refund}/complete', [RefundController::class, 'completeRefund'])->name('refund.complete');
+
+    // Common Routes of refund
+    Route::get('/refunds/{refund}', [RefundController::class, 'show'])->name('refunds.show');
+
+
     //Buyer Routes
     Route::prefix('/home')->controller(BuyerController::class)->group(function () {
         Route::get('/profile', 'showProfile')->name('profile.buyer');
@@ -58,10 +76,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/cart', 'showCart')->name('cart');
 
         Route::get('/chats', 'showChats')->name('chats');
+
+        // Request refund
+        Route::post('/orders/{order}/refund', [RefundController::class, 'requestRefund'])->name('buyer.refund.request');
+
+        // View my refunds
+        Route::get('/refunds', [RefundController::class, 'buyerRefunds'])->name('buyer.refunds');
     });
 
     Route::get('/home/products/{id}', [ProductsController::class, 'show'])->name('products.show');
-
 
     Route::prefix('/home/cart')->controller(CartController::class)->group(function () {
         Route::get('/get', 'getCart')->name('cart.get');
@@ -108,7 +131,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/tracking', 'getTrackingInfo')->name('order.tracking');
     });
 
-
     //dashboard admin and seller
     Route::prefix('/dashboard')->controller(DashboardController::class)->group(function () {
         Route::get('/profile', 'showProfile')->name('profile');
@@ -129,7 +151,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/chats', 'showChats')->name('chats');
     });
 
-
+    Route::prefix('/dashboard/refund')->controller(RefundController::class)->name('seller.')->group(function(){
+        
+        Route::get('/', 'sellerDashboard')->name('refunds');
+        
+        // View refund detail
+        Route::get('/{refund}', 'show')->name('refunds.show');
+        
+        // Approve refund (with proof upload)
+        Route::post('/{refund}/approve', 'approveRefund')->name('refund.approve');
+        
+        // Reject refund
+        Route::post('/{refund}/reject', 'rejectRefund')->name('refund.reject');
+    });
 
     Route::prefix('/dashboard/categories')->controller(CategoryController::class)->group(function () {
         Route::post('/store', 'store')->name('categories.store');
@@ -152,8 +186,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/password/change', 'changePassword')->name('profile.password.change');
         Route::post('/delete', 'destroy')->name('profile.delete');
     });
-
-
 
     Route::prefix('/dashboard/profile-seller')->controller(SellerProfileController::class)->name('sellerProfile.')->group(function () {
         Route::get('/', 'index')->name('index');

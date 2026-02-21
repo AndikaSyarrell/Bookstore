@@ -36,6 +36,7 @@ class BuyerController extends Controller
             // Rekomendasi query untuk featured products
             $featuredProducts = Product::query()
                 ->where('stock', '>', 0)
+                ->whereHas('seller.bankAccounts')
                 ->with(['seller', 'category'])
                 ->withSum('orderDetails as sold', 'quantity')
                 ->orderByDesc('sold')

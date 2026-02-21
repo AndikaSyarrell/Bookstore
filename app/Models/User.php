@@ -54,7 +54,7 @@ class User extends Authenticatable
         return $this->hasMany(Category::class);
     }
 
-    public function bankAccount()
+    public function bankAccounts()
     {
         return $this->hasMany(BankAccount::class);
     }
@@ -91,6 +91,11 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->hasMany(Notification::class);
+    }
+
+    public function refund()
+    {
+        return $this->hasMany(Refund::class);
     }
 
     public function unreadNotifications()

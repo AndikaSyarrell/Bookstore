@@ -61,7 +61,6 @@ class DashboardController extends Controller
                 ->whereMonth('created_at', now()->month)
                 ->sum('total_amount'),
         ];
-        // dd($stats);
 
         // Recent Orders
         $recentOrders = Order::where('seller_id', $sellerId)
@@ -143,6 +142,9 @@ class DashboardController extends Controller
             'delivered' => Order::where('seller_id', $sellerId)
                 ->where('status', 'delivered')
                 ->count(),
+            'pending_refund' => Order::where('seller_id', $sellerId)
+                ->where('status', 'refund_pending')
+                ->count(),
         ];
 
         // Get orders by status
@@ -163,6 +165,13 @@ class DashboardController extends Controller
             ->with(['buyer', 'orderDetails.product'])
             ->orderBy('created_at', 'asc')
             ->get();
+        
+        $refundRequests = Order::where('seller_id', $sellerId)
+            ->where('status', 'refund_pending')
+            ->with(['buyer', 'refund', 'orderDetails.product'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+            // dd($refundRequests);
 
         $allOrders = Order::where('seller_id', $sellerId)
             ->with(['buyer', 'payment'])
@@ -174,6 +183,7 @@ class DashboardController extends Controller
             'pendingOrders',
             'processingOrders',
             'shippedOrders',
+            'refundRequests',
             'allOrders'
         ));
     }

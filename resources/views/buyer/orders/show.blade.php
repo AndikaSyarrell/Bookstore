@@ -83,9 +83,44 @@
                     <h2 class="text-lg font-bold text-gray-900 mb-4">Payment Information</h2>
 
                     @if($order->status === 'pending_payment' || $order->status === 'payment_rejected')
+
                     <!-- Bank Account Info -->
                     <div class="mb-6">
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Transfer Pembayaran ke Rekening Penjual</h3>
+
+                        <!-- Auto-Cancel Countdown (if pending payment) -->
+                        @if($order->status === 'pending_payment' && $order->auto_cancel_at)
+                        <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                            <div class="flex items-start">
+                                <svg class="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-yellow-800 mb-1">Payment Deadline</h3>
+                                    <p class="text-sm text-yellow-700 mb-2">
+                                        Complete payment before this order is automatically cancelled
+                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <div
+                                            class="inline-flex items-center gap-2 px-3 py-2 bg-yellow-100 rounded-lg">
+                                            <svg class="w-5 h-5 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <template x-if="!isExpired">
+                                                <span class="font-mono font-bold text-yellow-900" x-text="timeLeft"></span>
+                                            </template>
+                                            <template x-if="isExpired">
+                                                <span class="font-bold text-red-700">EXPIRED</span>
+                                            </template>
+                                        </div>
+                                        <span class="text-xs text-yellow-600">
+                                            {{ \Carbon\Carbon::parse($order->auto_cancel_at)->format('d M Y, H:i') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
 
                         @if($sellerBankAccounts && $sellerBankAccounts->count() > 0)
                         <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
@@ -324,6 +359,46 @@
                     </div>
                 </div>
 
+                <!-- Refund Status (if refund exists) -->
+                @if($order->refund)
+                <div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-blue-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <button type="button" @click="showRefundApprovalModal = true">
+                                    <h3 class="font-semibold text-blue-800">Refund Request</h3>
+                                </button>
+                                <span class="px-3 py-1 bg-{{ $order->refund->status_color }}-100 text-{{ $order->refund->status_color }}-800 text-xs font-semibold rounded-full">
+                                    {{ ucfirst($order->refund->status) }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-blue-700 mb-1">
+                                Refund #{{ $order->refund->refund_number }}
+                            </p>
+                            <p class="text-sm text-blue-600">
+                                Amount: Rp {{ number_format($order->refund->refund_amount, 0, ',', '.') }}
+                            </p>
+                            <p class="text-xs text-blue-600 mt-2">
+                                Reason: {{ $order->refund->reason_label }}
+                            </p>
+                            @if($order->refund->reason_detail)
+                            <p class="text-xs text-blue-600 mt-1">
+                                {{ $order->refund->reason_detail }}
+                            </p>
+                            @endif
+                            @if($order->refund->admin_notes)
+                            <div class="mt-2 p-2 bg-blue-100 rounded text-xs text-blue-700">
+                                <strong>Admin Note:</strong> {{ $order->refund->admin_notes }}
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endif
+
             </div>
 
             <!-- Sidebar -->
@@ -352,7 +427,7 @@
 
                     <!-- Action Buttons -->
                     <div class="mt-6 space-y-3">
-                        @if(Auth::id() === $order->buyer_id && in_array($order->status, ['pending_payment', 'payment_rejected']))
+                        @if(Auth::id() === $order->buyer_id && in_array($order->status, ['pending_payment']))
                         <button
                             @click="cancelOrder()"
                             class="w-full px-4 py-2 border border-red-600 text-red-600 font-medium rounded-lg hover:bg-red-50">
@@ -360,11 +435,18 @@
                         </button>
                         @endif
 
+                        @if(Auth::id() === $order->buyer_id && in_array($order->status, ['pending_verification']))
+                        <button
+                            @click="showRefundModal = true"
+                            class="w-full px-4 py-2 border border-red-600 text-red-600 font-medium rounded-lg hover:bg-red-50">
+                            Cancel and Ask for refund
+                        </button>
+                        @endif
+
                         <a href="{{ route('order.index') }}" class="block w-full px-4 py-2 text-center border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50">
                             Back to Orders
                         </a>
                     </div>
-
                     <!-- Seller Info -->
                     <div class="mt-6 pt-6 border-t border-gray-200">
                         <h3 class="text-sm font-semibold text-gray-900 mb-2">Seller Information</h3>
@@ -627,18 +709,381 @@
         </div>
         @endif
 
+        <!-- Refund Request Modal -->
+        <div
+            x-show="showRefundModal"
+            x-cloak
+            class="fixed inset-0 z-50 overflow-y-auto"
+            style="display: none;">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="fixed inset-0 bg-black bg-opacity-50" @click="showRefundModal = false"></div>
+
+                <div class="relative bg-white rounded-lg max-w-md w-full p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Request Refund</h3>
+
+                    <form @submit.prevent="submitRefund()">
+                        <div class="space-y-5">
+
+                            <!-- Reason -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-900 mb-2">Reason for Refund *</label>
+                                <select
+                                    x-model="refundData.reason"
+                                    required
+                                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all">
+                                    <option value="">Select reason...</option>
+                                    <option value="buyer_cancel">I changed my mind</option>
+                                    <option value="payment_expired">Payment deadline too short</option>
+                                    <option value="stock_unavailable">Product not available</option>
+                                    <option value="product_defect">Product is defective</option>
+                                    <option value="wrong_item">Wrong item received</option>
+                                    <option value="other">Other reason</option>
+                                </select>
+                            </div>
+
+                            <!-- Detail -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-900 mb-2">Additional Details</label>
+                                <textarea
+                                    x-model="refundData.reason_detail"
+                                    rows="3"
+                                    maxlength="500"
+                                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+                                    placeholder="Explain why you want to cancel this order..."></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Max 500 characters</p>
+                            </div>
+
+                            <!-- Bank Account Section -->
+                            <div class="border-t-2 border-gray-200 pt-5">
+                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                    Your Bank Account for Refund
+                                </h4>
+
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                                    <p class="text-sm text-blue-800">
+                                        <strong>Note:</strong> Please provide your bank account details where you want to receive the refund. The seller will transfer the money to this account after approval.
+                                    </p>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <!-- Bank Name -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-900 mb-2">Bank Name *</label>
+                                        <select
+                                            x-model="refundData.bank_name"
+                                            required
+                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all">
+                                            <option value="">Select your bank...</option>
+                                            <option value="BCA">Bank Central Asia (BCA)</option>
+                                            <option value="Mandiri">Bank Mandiri</option>
+                                            <option value="BNI">Bank Negara Indonesia (BNI)</option>
+                                            <option value="BRI">Bank Rakyat Indonesia (BRI)</option>
+                                            <option value="CIMB Niaga">CIMB Niaga</option>
+                                            <option value="Permata">Bank Permata</option>
+                                            <option value="Danamon">Bank Danamon</option>
+                                            <option value="BTN">Bank Tabungan Negara (BTN)</option>
+                                            <option value="OCBC NISP">OCBC NISP</option>
+                                            <option value="Maybank">Maybank Indonesia</option>
+                                            <option value="Panin">Bank Panin</option>
+                                            <option value="BTPN">Bank BTPN</option>
+                                            <option value="Jenius">Jenius (BTPN)</option>
+                                            <option value="Jago">Bank Jago</option>
+                                            <option value="Seabank">SeaBank</option>
+                                            <option value="Blu">Blu (BCA Digital)</option>
+                                            <option value="Other">Other Bank</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Account Number -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-900 mb-2">Account Number *</label>
+                                        <input
+                                            type="text"
+                                            x-model="refundData.bank_account_number"
+                                            required
+                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+                                            placeholder="1234567890">
+                                    </div>
+
+                                    <!-- Account Holder Name -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-900 mb-2">Account Holder Name *</label>
+                                        <input
+                                            type="text"
+                                            x-model="refundData.bank_account_name"
+                                            required
+                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+                                            placeholder="As per bank records">
+                                        <p class="text-xs text-gray-500 mt-1">Name must match your bank account</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Warning -->
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <div class="text-sm text-yellow-800">
+                                        <strong class="block mb-1">Important:</strong>
+                                        <ul class="space-y-1 list-disc list-inside">
+                                            <li>Your refund request will be reviewed by the seller</li>
+                                            <li>Make sure your bank account details are correct</li>
+                                            <li>Refund will be processed within 1-3 business days after approval</li>
+                                            <li>Stock will be returned after approval</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex gap-3 mt-8">
+                            <button
+                                type="submit"
+                                :disabled="isSubmitting"
+                                class="flex-1 px-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 disabled:bg-gray-400 transition-colors">
+                                <span x-show="!isSubmitting">Submit Refund Request</span>
+                                <span x-show="isSubmitting">Submitting...</span>
+                            </button>
+                            <button
+                                type="button"
+                                @click="showRefundModal = false"
+                                class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-colors">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- refund approval modal -->
+
+        <div
+            x-show="showRefundApprovalModal"
+            x-cloak
+            style="display:none;"
+            class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold">Refund Details</h2>
+                        <p class="text-sm text-gray-500">{{ $refund->refund_number }}</p>
+                    </div>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-lg
+        bg-{{ $refund->status_color }}-100
+        text-{{ $refund->status_color }}-800">
+                        {{ ucfirst($refund->status) }}
+                    </span>
+                </div>
+
+                <!-- Refund Info -->
+                <div class="border rounded-xl p-4 space-y-2 text-sm mb-4">
+                    <div class="flex justify-between">
+                        <span>Order</span>
+                        <a href="{{ route('order.show',$refund->order_id) }}"
+                            class="font-semibold text-blue-600">
+                            #{{ $refund->order->order_number }}
+                        </a>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Amount</span>
+                        <span class="font-bold text-green-600">
+                            Rp {{ number_format($refund->refund_amount,0,',','.') }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Reason</span>
+                        <span class="font-semibold">
+                            {{ $refund->reason_label }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Date</span>
+                        <span>
+                            {{ $refund->created_at->format('d M Y H:i') }}
+                        </span>
+                    </div>
+                    @if($refund->reason_detail)
+                    <div class="pt-2 border-t">
+                        <p class="text-gray-600 text-xs mb-1">Details</p>
+                        <p class="bg-gray-50 p-2 rounded text-xs">
+                            {{ $refund->reason_detail }}
+                        </p>
+                    </div>
+                    @endif
+                </div>
+
+
+                <!-- Bank Info -->
+                @if($refund->hasBuyerBankDetails())
+                <div class="border rounded-xl p-4 mb-4 text-sm space-y-2">
+                    <h4 class="font-semibold">Bank Account</h4>
+                    <div class="flex justify-between">
+                        <span>Bank</span>
+                        <span class="font-semibold">
+                            {{ $refund->bank_name }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>No</span>
+                        <span class="font-mono">
+                            {{ $refund->bank_account_number }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Name</span>
+                        <span>
+                            {{ $refund->bank_account_name }}
+                        </span>
+                    </div>
+                </div>
+                @endif
+
+
+                <!-- Buyer -->
+                <div class="border rounded-xl p-4 mb-4 text-sm">
+                    <h4 class="font-semibold mb-2">Buyer</h4>
+                    <p>{{ $refund->user->name }}</p>
+                    <p class="text-gray-600 text-xs">
+                        {{ $refund->user->email }}
+                    </p>
+                </div>
+
+
+                <!-- Upload Proof -->
+                @if($refund->status=='pending' && $refund->hasBuyerBankDetails())
+                <form @submit.prevent="approveRefund()" class="space-y-3">
+                    <input type="file"
+                        @change="handleProofUpload($event)"
+                        required
+                        class="text-sm">
+                    <textarea
+                        x-model="approvalData.notes"
+                        rows="2"
+                        placeholder="Notes (optional)"
+                        class="w-full border rounded-lg p-2 text-sm">
+                    </textarea>
+                    <div class="flex gap-2">
+                        <button type="submit"
+                            :disabled="isSubmitting"
+                            class="flex-1 bg-green-600 text-white py-2 rounded-lg">
+                            Approve
+                        </button>
+                        <button type="button"
+                            @click="rejectRefund()"
+                            class="flex-1 bg-red-600 text-white py-2 rounded-lg">
+                            Reject
+                        </button>
+                    </div>
+                </form>
+                @endif
+
+
+                <!-- Approved Proof -->
+                @if($refund->status=='approved' && $refund->refund_proof)
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2 text-sm">
+                        Transfer Proof
+                    </h4>
+                    <img src="{{ asset('storage/refunds/'.$refund->refund_proof) }}"
+                        class="rounded-lg border">
+                </div>
+                @endif
+
+
+                <!-- Close -->
+                <button
+                    type="button"
+                    @click="showRefundApprovalModal=false"
+                    class="w-full mt-4 border py-2 rounded-lg">
+                    Close
+                </button>
+            </div>
+        </div>
 
     </div>
 </div>
 
 <script>
+    function countdown(deadline) {
+        return {
+            timeLeft: '',
+            isExpired: false,
+            interval: null,
+
+
+            startCountdown() {
+                this.updateTime();
+                this.interval = setInterval(() => {
+                    this.updateTime();
+                }, 1000);
+            },
+
+            updateTime() {
+                const now = new Date().getTime();
+                const end = new Date(deadline).getTime();
+                const distance = end - now;
+
+                if (distance < 0) {
+                    this.isExpired = true;
+                    this.timeLeft = 'EXPIRED';
+                    clearInterval(this.interval);
+
+                    // Optional: reload page to show expired state
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                    return;
+                }
+
+                const hours = Math.floor(distance / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                this.timeLeft = `${hours}h ${minutes}m ${seconds}s`;
+            }
+        }
+    }
+
     function orderDetail() {
         return {
             // Existing payment proof data
             proofFile: null,
             proofNotes: '',
             isUploading: false,
-            orderId: {{ $order-> id}},
+            orderId: '{{$order -> id}}',
+
+            //refund related
+            showRefundModal: false,
+            showRefundApprovalModal: false,
+            isSubmitting: false,
+            refundData: {
+                reason: '',
+                reason_detail: '',
+                bank_name: '',
+                bank_account_number: '',
+                bank_account_name: '',
+            },
+
+            proofRefundFile: null,
+            proofPreview: null,
+
+            approvalData: {
+                notes: ''
+            },
+
+            rejectionData: {
+                notes: ''
+            },
+
 
             // Resi upload data - INTEGRATED
             showShippingModal: false,
@@ -655,6 +1100,47 @@
 
             init() {
                 // Any initialization if needed
+            },
+
+            //refund
+            async submitRefund() {
+                // Validate bank details
+                if (!this.refundData.bank_name || !this.refundData.bank_account_number || !this.refundData.bank_account_name) {
+                    alert('Please fill in all bank account details');
+                    return;
+                }
+
+                if (!this.refundData.reason) {
+                    alert('Please select a reason');
+                    return;
+                }
+
+                this.isSubmitting = true;
+
+                try {
+                    const response = await fetch(`{{route('buyer.refund.request', $order->id)}}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify(this.refundData)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert('Refund request submitted successfully');
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to submit refund request');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred');
+                } finally {
+                    this.isSubmitting = false;
+                }
             },
 
             // ===== PAYMENT PROOF METHODS (existing) =====
@@ -694,6 +1180,159 @@
                 } finally {
                     this.isUploading = false;
                 }
+            },
+
+            handleProofUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                this.proofRefundFile = file;
+
+                // Preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.proofPreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            },
+
+
+
+            async approveRefund() {
+                if (!this.proofRefundFile) {
+                    alert('Please upload transfer proof');
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to approve this refund? Make sure you have transferred the money to buyer.')) {
+                    return;
+                }
+
+                this.isSubmitting = true;
+
+                try {
+                    const formData = new FormData();
+                    formData.append('refund_proof', this.proofRefundFile);
+                    formData.append('notes', this.approvalData.notes);
+
+                    const response = await fetch(`{{ route('seller.refund.approve', $refund->id) }}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert('Refund approved successfully!');
+                        window.location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error Details:', {
+                        message: error.message,
+                        stack: error.stack,
+                        name: error.name,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    // Tampilkan error yang lebih spesifik ke user
+                    let errorMessage = 'An error occurred';
+
+                    if (error instanceof TypeError) {
+                        errorMessage = 'There was a problem with the data format';
+                    } else if (error instanceof SyntaxError) {
+                        errorMessage = 'There was a problem parsing the response';
+                    } else if (error.message.includes('Failed to fetch')) {
+                        errorMessage = 'Network connection failed. Please check your internet connection';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+
+                    alert(errorMessage);
+                } finally {
+                    this.isSubmitting = false;
+                }
+            },
+
+            async rejectRefund() {
+                if (!this.rejectionData.notes) {
+                    alert('Please provide a rejection reason');
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to reject this refund?')) {
+                    return;
+                }
+
+                this.isSubmitting = true;
+
+                try {
+                    const response = await fetch(`{{ route('seller.refund.reject', $refund->id) }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify(this.rejectionData)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert('Refund rejected');
+                        window.location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred');
+                } finally {
+                    this.isSubmitting = false;
+                    this.showRejectModal = false;
+                }
+            },
+
+            copyToClipboard(text) {
+                const cleanText = text.toString().replace(/\./g, '');
+                navigator.clipboard.writeText(cleanText).then(() => {
+                    this.showToast('Copied to clipboard!');
+                });
+            },
+
+            copyBankDetails() {
+                const text = `
+Transfer Details
+━━━━━━━━━━━━━━━━━━━━━
+Bank: {{ $refund->bank_name }}
+Account: {{ $refund->bank_account_number }}
+Name: {{ $refund->bank_account_name }}
+Amount: Rp {{ number_format($refund->refund_amount, 0, ',', '.') }}
+━━━━━━━━━━━━━━━━━━━━━
+            `.trim();
+
+                navigator.clipboard.writeText(text).then(() => {
+                    this.showToast('All details copied!');
+                });
+            },
+
+            showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
             },
 
             // ===== SHIPPING RESI METHODS (new - integrated) =====
@@ -885,19 +1524,21 @@
     [x-cloak] {
         display: none !important;
     }
-    @keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
-.animate-fade-in {
-    animation: fade-in 0.3s ease-out;
-}
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
+    }
 </style>
 @endsection

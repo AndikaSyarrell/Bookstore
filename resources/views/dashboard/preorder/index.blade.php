@@ -59,6 +59,20 @@
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center justify-between">
                     <div>
+                        <p class="text-sm text-gray-600">Refund</p>
+                        <p class="text-2xl font-bold text-purple-600">{{ $stats['pending_refund'] ?? 0 }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
                         <p class="text-sm text-gray-600">Completed</p>
                         <p class="text-2xl font-bold text-green-600">{{ $stats['delivered'] ?? 0 }}</p>
                     </div>
@@ -98,6 +112,13 @@
                         class="px-6 py-4 border-b-2 font-medium text-sm transition-colors"
                     >
                         Shipped Orders
+                    </button>
+                    <button 
+                        @click="activeTab = 'refund'"
+                        :class="activeTab === 'refund' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'"
+                        class="px-6 py-4 border-b-2 font-medium text-sm transition-colors"
+                    >
+                        Refund Pending
                     </button>
                     <button 
                         @click="activeTab = 'all'"
@@ -318,6 +339,54 @@
         </div>
 
         <!-- All Orders Tab -->
+        <div x-show="activeTab === 'refund'" class="space-y-4">
+            @forelse($refundRequests as $order)
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">{{ $order->order_number }}</h3>
+                        <p class="text-sm text-gray-600 mt-1">{{ $order->created_at->format('d M Y, H:i') }}</p>
+                        <p class="text-sm text-gray-600">Buyer: {{ $order->buyer->name }}</p>
+                    </div>
+                    <div class="text-right">
+                        @php
+                            $statusColors = [
+                                'pending_payment' => 'bg-yellow-100 text-yellow-800',
+                                'pending_verification' => 'bg-blue-100 text-blue-800',
+                                'processing' => 'bg-indigo-100 text-indigo-800',
+                                'shipped' => 'bg-purple-100 text-purple-800',
+                                'delivered' => 'bg-green-100 text-green-800',
+                                'cancelled' => 'bg-gray-100 text-gray-800',
+                            ];
+                        @endphp
+                        <span class="px-3 py-1 {{ $statusColors[$order->status] ?? 'bg-gray-100 text-gray-800' }} text-sm font-semibold rounded-full">
+                            {{ ucfirst(str_replace('_', ' ', $order->status)) }}
+                        </span>
+                        <p class="text-lg font-bold text-blue-600 mt-2">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ route('order.show-seller', $order->id) }}"
+                    class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+            @empty
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                <p class="text-gray-600">No orders found</p>
+            </div>
+            @endforelse
+
+            <!-- Pagination -->
+            @if($allOrders->hasPages())
+            <div class="mt-6">
+                {{ $allOrders->links() }}
+            </div>
+            @endif
+        </div>
+        
+        <!-- All Orders Tab -->
         <div x-show="activeTab === 'all'" class="space-y-4">
             @forelse($allOrders as $order)
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -376,7 +445,7 @@ function sellerApproval() {
         init() {
             // Set active tab based on URL hash
             const hash = window.location.hash.substring(1);
-            if (['pending', 'processing', 'shipped', 'all'].includes(hash)) {
+            if (['pending', 'processing', 'shipped', 'refund', 'all'].includes(hash)) {
                 this.activeTab = hash;
             }
         },
