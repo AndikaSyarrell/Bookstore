@@ -213,7 +213,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/store', 'store')->name('users.store');
         Route::get('/{id}/edit', 'edit')->name('users.edit');
         Route::post('/{id}/update', 'update')->name('users.update');
-        Route::delete('/{id}/delete', 'destroy')->name('users.delete');
+        Route::delete('/{id}/delete', 'destroy')->name('users.destroy');
     });
 
     Route::prefix('/chats')->controller(ChatController::class)->group(function () {

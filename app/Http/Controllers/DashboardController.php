@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Category;
 use App\Models\Refund;
+use App\Models\Role;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Pagination\Paginator;
 
@@ -363,11 +364,31 @@ class DashboardController extends Controller
         return view('dashboard.categories.index', ['categories' => $categories]);
     }
 
-    public function showUsers()
+    public function showUsers(Request $request)
     {
-        $users = User::where('role_id', '!=', Auth::user()->role_id)->paginate(5);
+        $query = User::with('role');
 
-        return view('dashboard.user.index', ['users' => $users]);
+        // Search
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('no_telp', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by role
+        if ($request->has('role') && $request->role != '') {
+            $query->whereHas('role', function($q) use ($request) {
+                $q->where('id', $request->role);
+            });
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->paginate(15);
+        $roles = Role::all();
+
+        return view('dashboard.user.index', compact('users', 'roles'));
     }
 
     public function showProfile()

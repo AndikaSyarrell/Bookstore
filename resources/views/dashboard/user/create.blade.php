@@ -283,7 +283,7 @@
             {{-- Form Actions --}}
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg flex gap-3 justify-end">
                 <a
-                    href="/admin/users"
+                    href="{{ route('users') }}"
                     class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition">
                     Batal
                 </a>
@@ -434,23 +434,24 @@
 </div>
 
 <script>
-    function createUser() {
 
+
+    function createUser() {
         return {
             formData: {
-                name: '',
-                email: '',
-                no_telp: '',
-                birth_date: '',
-                // gender: '',
-                address: '',
-                role: '',
+                name: "{{ $user->name ?? '' }}",
+                email: "{{ $user->email ?? '' }}",
+                no_telp: "{{ $user->no_telp ?? '' }}",
+                birth_date: "{{ $user->birth_date ? date('Y-m-d', strtotime($user->birth_date)) : '' }}",
+                // gender: "",
+                address: "{{ $user->address ?? '' }}",
+                role: "{{ $user->role_id ?? '' }}",
                 // status: 'active',
-                password: '',
-                password_confirmation: '',
+                password: "",
+                password_confirmation: "",
                 send_welcome_email: true,
                 require_password_change: false,
-                img: ''
+                img: "{{ Storage::url('/profile/'.$user->img) ?? '' }}"
             },
             errors: {},
             loading: false,
@@ -458,7 +459,7 @@
             showConfirmPassword: false,
             uploadModalOpen: false,
             selectedFile: null,
-            previewImage: null,
+            previewImage: "{{ Storage::url('/profile/'.$user->img) ?? '' }}",
             uploadError: '',
             dragOver: false,
             imageZoom: 100,
@@ -548,6 +549,12 @@
 
             validateField(field) {
                 this.errors[field] = '';
+
+                const user = @json($user);
+                                
+                if (typeof user !== 'undefined') {
+                    return; // Skip validation if $user is set
+                }
 
                 switch (field) {
                     case 'name':
@@ -642,8 +649,11 @@
 
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+                    const url = "{{ isset($user) ? route('users.update', $user->id) : route('users.store') }}";
+                    
+
                     // 2. Lakukan Fetch API
-                    const response = await fetch('{{ route("users.store") }}', {
+                    const response = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,
