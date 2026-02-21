@@ -14,6 +14,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\RefundController;
+use App\Http\Controllers\SalesReportController;
 use App\Http\Controllers\SellerProfileController;
 use App\Http\Controllers\UserController;
 use App\Models\Message;
@@ -46,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'sellerDashboard'])->name('dashboard');
     Route::get('/home', [BuyerController::class, 'index'])->name('homepage');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/reports/download', [SalesReportController::class, 'generateMonthlyReport'])->name('reports.download');
 
     // View refund requests
     Route::get('/refunds', [RefundController::class, 'sellerRefunds'])->name('seller.refunds');

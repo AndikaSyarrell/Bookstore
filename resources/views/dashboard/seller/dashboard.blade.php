@@ -1,4 +1,7 @@
 @extends('layouts.app')
+@section('title', 'Dashboard - Seller')
+
+@endsection
 
 @section('content')
 <div x-data="sellerDashboard()" x-init="init()" class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
