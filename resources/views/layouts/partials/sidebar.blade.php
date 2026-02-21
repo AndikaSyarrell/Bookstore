@@ -37,7 +37,7 @@
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                 </svg>
-                <span class="font-medium">Products</span>
+                <span class="font-medium">Users</span>
             </a>
             @endif
 
@@ -73,7 +73,7 @@
                 </a>
                 <a href="{{ route('chats.index') }}"
                     class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
-                      {{ request()->routeIs('preorders.*') || request()->routeIs('preorders')
+                      {{ request()->routeIs('chats.*') || request()->routeIs('chats')
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'text-gray-700 hover:bg-gray-100' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24">
@@ -103,7 +103,7 @@
                     Settings
                 </h3>
 
-                <a href="#"
+                <!-- <a href="#"
                     class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('settings.general') 
                           ? 'bg-indigo-600 text-white shadow-md' 
@@ -113,7 +113,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
                     <span class="font-medium">General</span>
-                </a>
+                </a> -->
 
                 <a href="{{ auth()->user()->role === 'master' ? route('masterProfile') : route('sellerProfile.index') }}"
                     class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200

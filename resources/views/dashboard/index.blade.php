@@ -1,182 +1,211 @@
 @extends('layouts.app')
 
 @section('content')
-<div x-data="sellerDashboard()" x-init="init()" class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
+<div x-data="masterDashboard()" x-init="init()" class="min-h-screen bg from-gray-50 to-blue-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <!-- Header -->
+        <!-- Header
         <div class="mb-8">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                    <h1 class="text-4xl font-bold text-gray-900 mb-2">Seller Dashboard</h1>
-                    <p class="text-gray-600">Welcome back, {{ Auth::user()->name }}! 👋</p>
+                    <h1 class="text-4xl font-bold text-white mb-2">Master Dashboard</h1>
+                    <p class="text-gray-500">Complete platform overview and analytics</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('products.create') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        Add Product
-                    </a>
-                    <a href="{{ route('profile') }}" class="p-3 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="px-4 py-2 bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-xl text-white">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span class="text-sm font-semibold">System Online</span>
+                        </div>
+                    </div>
+                    <button class="p-3 bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-xl hover transition-colors">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                    </a>
+                    </button>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- Pending Actions Alert -->
+        @if($pendingActions['pending_verifications'] > 0 || $pendingActions['pending_refunds'] > 0 || $pendingActions['unverified_banks'] > 0)
+        <div class="mb-6 bg-yellow-500 backdrop-blur-sm border border-yellow-400 rounded-2xl p-4">
+            <div class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div class="flex-1">
+                    <h3 class="font-bold text-yellow-400 mb-2">Pending Actions Required</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-yellow-300">
+                        @if($pendingActions['pending_verifications'] > 0)
+                        <div>{{ $pendingActions['pending_verifications'] }} orders need verification</div>
+                        @endif
+                        @if($pendingActions['pending_refunds'] > 0)
+                        <div>{{ $pendingActions['pending_refunds'] }} pending refunds</div>
+                        @endif
+                        @if($pendingActions['unverified_banks'] > 0)
+                        <div>{{ $pendingActions['unverified_banks'] }} unverified bank accounts</div>
+                        @endif
+                        @if($pendingActions['low_stock_products'] > 0)
+                        <div>{{ $pendingActions['low_stock_products'] }} low stock products</div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
+        @endif
 
-        <!-- Stats Grid -->
+        <!-- Key Metrics Grid -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
             
             <!-- Total Revenue -->
-            <div class="bg-green-600 rounded-2xl shadow-lg p-6 text-white">
+            <div class="bg-green-600 rounded-2xl shadow-2xl p-6 text-white transform hover:scale-105 transition-transform">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <div class="p-3 bg-white rounded-xl">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Total</span>
+                    <span class="text-xs bg-white px-2 py-1 rounded-full">All Time</span>
                 </div>
                 <p class="text-3xl font-bold mb-1">Rp {{ number_format($stats['total_revenue'], 0, ',', '.') }}</p>
                 <p class="text-sm opacity-90">Total Revenue</p>
-            </div>
-
-            <!-- Pending Revenue -->
-            <div class="bg-yellow-600 rounded-2xl shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white bg-opacity-20 rounded-xl">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Pending</span>
-                </div>
-                <p class="text-3xl font-bold mb-1">Rp {{ number_format($stats['pending_revenue'], 0, ',', '.') }}</p>
-                <p class="text-sm opacity-90">Pending Revenue</p>
+                <p class="text-xs mt-2 opacity-75">+Rp {{ number_format($stats['revenue_today'], 0, ',', '.') }} today</p>
             </div>
 
             <!-- Total Orders -->
-            <div class="bg-blue-600 rounded-2xl shadow-lg p-6 text-white">
+            <div class="bg-blue-600 rounded-2xl shadow-2xl p-6 text-white transform hover:scale-105 transition-transform">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <div class="p-3 bg-white rounded-xl">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
                     </div>
-                    <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">All Time</span>
+                    <span class="text-xs bg-white px-2 py-1 rounded-full">Orders</span>
                 </div>
-                <p class="text-3xl font-bold mb-1">{{ $stats['total_orders'] }}</p>
+                <p class="text-3xl font-bold mb-1">{{ number_format($stats['total_orders']) }}</p>
                 <p class="text-sm opacity-90">Total Orders</p>
+                <p class="text-xs mt-2 opacity-75">{{ $stats['completed_orders'] }} completed</p>
+            </div>
+
+            <!-- Total Users -->
+            <div class="bg-purple-600 rounded-2xl shadow-2xl p-6 text-white transform hover:scale-105 transition-transform">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 bg-white rounded-xl">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs bg-white px-2 py-1 rounded-full">Users</span>
+                </div>
+                <p class="text-3xl font-bold mb-1">{{ number_format($stats['total_users']) }}</p>
+                <p class="text-sm opacity-90">Total Users</p>
+                <p class="text-xs mt-2 opacity-75">{{ $stats['total_sellers'] }} sellers, {{ $stats['total_buyers'] }} buyers</p>
             </div>
 
             <!-- Total Products -->
-            <div class="bg-purple-600 rounded-2xl shadow-lg p-6 text-white">
+            <div class="bg-orange-600 rounded-2xl shadow-2xl p-6 text-white transform hover:scale-105 transition-transform">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <div class="p-3 bg-white rounded-xl">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                         </svg>
                     </div>
-                    <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Active</span>
+                    <span class="text-xs bg-white px-2 py-1 rounded-full">Products</span>
                 </div>
-                <p class="text-3xl font-bold mb-1">{{ $stats['active_products'] }}/{{ $stats['total_products'] }}</p>
-                <p class="text-sm opacity-90">Products</p>
+                <p class="text-3xl font-bold mb-1">{{ number_format($stats['total_products']) }}</p>
+                <p class="text-sm opacity-90">Total Products</p>
+                <p class="text-xs mt-2 opacity-75">{{ $stats['active_products'] }} active</p>
             </div>
 
         </div>
 
-        <!-- Quick Stats Row -->
+        <!-- Secondary Stats -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-xl p-5 border border-white border-opacity-20">
                 <div class="flex items-center gap-3">
-                    <div class="p-2 bg-blue-50 rounded-lg">
-                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-yellow-500 rounded-lg">
+                        <svg class="w-5 h-5 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['pending_orders'] }}</p>
-                        <p class="text-xs text-gray-600">Pending</p>
+                        <p class="text-2xl font-bold ">{{ $stats['pending_orders'] }}</p>
+                        <p class="text-xs text-gray-500">Pending Orders</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-xl p-5 border border-white border-opacity-20">
                 <div class="flex items-center gap-3">
-                    <div class="p-2 bg-yellow-50 rounded-lg">
-                        <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <div class="p-2 bg-red-500 rounded-lg">
+                        <svg class="w-5 h-5 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/>
                         </svg>
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['processing_orders'] }}</p>
-                        <p class="text-xs text-gray-600">Processing</p>
+                        <p class="text-2xl font-bold ">{{ $stats['pending_refunds'] }}</p>
+                        <p class="text-xs text-gray-500">Pending Refunds</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-xl p-5 border border-white border-opacity-20">
                 <div class="flex items-center gap-3">
-                    <div class="p-2 bg-green-50 rounded-lg">
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-green-500 rounded-lg">
+                        <svg class="w-5 h-5 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['completed_orders'] }}</p>
-                        <p class="text-xs text-gray-600">Completed</p>
+                        <p class="text-2xl font-bold ">{{ number_format($performance['conversion_rate'], 1) }}%</p>
+                        <p class="text-xs text-gray-500">Conversion Rate</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-xl p-5 border border-white border-opacity-20">
                 <div class="flex items-center gap-3">
-                    <div class="p-2 bg-red-50 rounded-lg">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    <div class="p-2 bg-blue-500 rounded-lg">
+                        <svg class="w-5 h-5 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                         </svg>
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['low_stock'] }}</p>
-                        <p class="text-xs text-gray-600">Low Stock</p>
+                        <p class="text-2xl font-bold ">{{ $stats['verified_accounts'] }}</p>
+                        <p class="text-xs text-gray-500">Verified Banks</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-
-        
             
             <!-- Revenue Chart -->
-            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="lg:col-span-2 bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-2xl border border-white border-opacity-20 p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-gray-900">Revenue Overview</h3>
-                    <span class="text-sm text-gray-600">Last 7 days</span>
+                    <h3 class="text-xl font-bold ">Revenue Trend</h3>
+                    <span class="text-sm text-gray-500">Last 30 days</span>
                 </div>
-                
                 <div class="h-64">
                     <canvas id="revenueChart"></canvas>
                 </div>
             </div>
 
             <!-- Orders by Status -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-xl font-bold text-gray-900 mb-6">Orders Status</h3>
-                
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-2xl border border-white border-opacity-20 p-6">
+                <h3 class="text-xl font-bold  mb-6">Orders Status</h3>
                 <div class="space-y-4">
                     @foreach(['pending_payment' => 'Pending Payment', 'pending_verification' => 'Verification', 'processing' => 'Processing', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $status => $label)
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-medium text-gray-700">{{ $label }}</span>
-                            <span class="text-sm font-bold text-gray-900">{{ $ordersByStatus[$status] ?? 0 }}</span>
+                            <span class="text-sm font-medium text-gray-500">{{ $label }}</span>
+                            <span class="text-sm font-bold ">{{ $ordersByStatus[$status] ?? 0 }}</span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $stats['total_orders'] > 0 ? (($ordersByStatus[$status] ?? 0) / $stats['total_orders'] * 100) : 0 }}%"></div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: {{ $stats['total_orders'] > 0 ? (($ordersByStatus[$status] ?? 0) / $stats['total_orders'] * 100) : 0 }}%"></div>
                         </div>
                     </div>
                     @endforeach
@@ -185,264 +214,154 @@
 
         </div>
 
+        <!-- Data Tables Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             
-            <!-- Recent Orders -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <!-- Recent Users -->
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-2xl border border-white border-opacity-20 p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-gray-900">Recent Orders</h3>
-                    <a href="{{ route('order.index') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">View All →</a>
+                    <h3 class="text-xl font-bold ">Recent Users</h3>
+                    <a href="#" class="text-sm text-blue-400 hover:text-blue-300 font-medium">View All →</a>
                 </div>
 
-                @if($recentOrders->count() > 0)
+                <div class="space-y-3">
+                    @foreach($recentUsers->take(5) as $user)
+                    <div class="flex items-center gap-4 p-3 bg-white bg-opacity-5 rounded-xl hover transition-colors">
+                        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center  font-bold">
+                            {{ substr($user->name, 0, 1) }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold  truncate">{{ $user->name }}</p>
+                            <p class="text-xs text-gray-400">{{ $user->email }}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="px-2 py-1 bg-purple-500 bg-opacity-30 text-purple-300 text-xs font-semibold rounded-full">
+                                {{ ucfirst($user->role->name) }}
+                            </span>
+                            <p class="text-xs text-gray-400 mt-1">{{ $user->created_at->diffForHumans() }}</p>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-2xl border border-white border-opacity-20 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold ">Recent Orders</h3>
+                    <a href="#" class="text-sm text-blue-400 hover:text-blue-300 font-medium">View All →</a>
+                </div>
+
                 <div class="space-y-3">
                     @foreach($recentOrders->take(5) as $order)
-                    <a href="{{ route('order.show', $order->id) }}" class="block p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all">
+                    <div class="p-3 bg-white bg-opacity-5 rounded-xl hover transition-colors">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="font-semibold text-gray-900">#{{ $order->order_number }}</span>
-                            <span class="px-3 py-1 bg-{{ $order->status === 'delivered' ? 'green' : ($order->status === 'pending_payment' ? 'yellow' : 'blue') }}-100 text-{{ $order->status === 'delivered' ? 'green' : ($order->status === 'pending_payment' ? 'yellow' : 'blue') }}-800 text-xs font-semibold rounded-full">
+                            <span class="font-semibold  text-sm">#{{ $order->order_number }}</span>
+                            <span class="px-2 py-1  text-xs font-semibold rounded-full">
+                                @php
+                                    $statusColors = [
+                                        'delivered' => ['bg' => 'green', 'text' => 'green'],
+                                        'cancelled' => ['bg' => 'red', 'text' => 'red'],
+                                        'processed' => ['bg' => 'blue', 'text' => 'blue'],
+                                        'refunded' => ['bg' => 'purple', 'text' => 'purple'],
+                                        'pending_refund' => ['bg' => 'orange', 'text' => 'orange'],
+                                        'pending_payment' => ['bg' => 'yellow', 'text' => 'yellow'],
+                                        'pending_approval' => ['bg' => 'indigo', 'text' => 'indigo'],
+                                        'shipped' => ['bg' => 'cyan', 'text' => 'cyan'],
+                                    ];
+                                    $colors = $statusColors[$order->status] ?? ['bg' => 'gray', 'text' => 'gray'];
+                                @endphp
+                                <span class="px-2 py-1 bg-{{ $colors['bg'] }}-500 bg-opacity-30  text-xs font-semibold rounded-full">
                                 {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                             </span>
                         </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gray-600">{{ $order->buyer->name }}</span>
-                            <span class="font-bold text-gray-900">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-400">{{ $order->buyer->name }} → {{ $order->seller->name }}</span>
+                            <span class="font-bold ">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">{{ $order->created_at->diffForHumans() }}</p>
-                    </a>
+                        <p class="text-xs text-gray-500 mt-1">{{ $order->created_at->diffForHumans() }}</p>
+                    </div>
                     @endforeach
                 </div>
-                @else
-                <div class="text-center py-12">
-                    <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                    </svg>
-                    <p class="text-gray-600">No orders yet</p>
-                </div>
-                @endif
             </div>
-
-            <div x-data="salesReport()" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Monthly Sales Report</h3>
-            <p class="text-sm text-gray-600">Download detailed sales report in Excel format</p>
-        </div>
-        <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-    </div>
-
-    <form @submit.prevent="downloadReport()">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <!-- Month Selection -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-900 mb-2">Month</label>
-                <select 
-                    x-model="reportData.month"
-                    required
-                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
-                >
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </select>
-            </div>
-
-            <!-- Year Selection -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-900 mb-2">Year</label>
-                <select 
-                    x-model="reportData.year"
-                    required
-                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
-                >
-                    <option value="2024">2024</option>
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Report Contents -->
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-            <h4 class="font-semibold text-blue-900 mb-3">Report Contents:</h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div class="flex items-start gap-2">
-                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
-                    </svg>
-                    <div>
-                        <span class="font-semibold text-blue-900 block">Summary Sheet</span>
-                        <span class="text-blue-700">Total revenue, orders, products sold</span>
-                    </div>
-                </div>
-                <div class="flex items-start gap-2">
-                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
-                    </svg>
-                    <div>
-                        <span class="font-semibold text-blue-900 block">Orders Sheet</span>
-                        <span class="text-blue-700">Detailed order list with totals</span>
-                    </div>
-                </div>
-                <div class="flex items-start gap-2">
-                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
-                    </svg>
-                    <div>
-                        <span class="font-semibold text-blue-900 block">Products Sheet</span>
-                        <span class="text-blue-700">Product performance & revenue</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Download Button -->
-        <button 
-            type="submit"
-            :disabled="isDownloading"
-            class="w-full px-6 py-4 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-3"
-        >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <span x-show="!isDownloading">Download Excel Report</span>
-            <span x-show="isDownloading">Generating Report...</span>
-        </button>
-    </form>
-
-    <!-- Recent Downloads Info -->
-    <div class="mt-6 pt-6 border-t border-gray-200">
-        <p class="text-xs text-gray-500">
-            <strong>Note:</strong> Report includes all delivered orders for the selected month. File format: .xlsx (Excel)
-        </p>
-    </div>
-</div>
 
         </div>
 
-        <!-- Low Stock Alert -->
-        @if($lowStockProducts->count() > 0)
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="p-2 bg-red-50 rounded-lg">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
+        <!-- Top Performers Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Top Sellers -->
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-2xl border border-white border-opacity-20 p-6">
+                <h3 class="text-xl font-bold  mb-6">Top Sellers</h3>
+                <div class="space-y-3">
+                    @foreach($topSellers->take(5) as $index => $seller)
+                    <div class="flex items-center gap-4 p-3 bg-white bg-opacity-5 rounded-xl">
+                        <div class="w-8 h-8 rounded-full bg from-yellow-400 to-orange-500 flex items-center justify-center  font-bold text-sm">
+                            #{{ $index + 1 }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold  truncate">{{ $seller->name }}</p>
+                            <p class="text-xs text-gray-400">{{ $seller->total_orders }} orders</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-green-400">Rp {{ number_format($seller->total_revenue ?? 0, 0, ',', '.') }}</p>
+                        </div>
+                    </div>
+                    @endforeach
                 </div>
-                <h3 class="text-xl font-bold text-gray-900">Low Stock Alert</h3>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($lowStockProducts as $product)
-                <div class="flex items-center gap-4 p-4 bg-red-50 border border-red-200 rounded-xl">
-                    @if($product->img)
-                    <img src="{{ asset('storage/products/' . $product->img) }}" alt="{{ $product->title }}" class="w-16 h-16 object-cover rounded-lg">
-                    @else
-                    <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
+            <!-- Top Products -->
+            <div class="bg-white shadow-sm border border-gray-100 backdrop-blur-sm rounded-2xl border border-white border-opacity-20 p-6">
+                <h3 class="text-xl font-bold  mb-6">Top Products</h3>
+                <div class="space-y-3">
+                    @foreach($topProducts->take(5) as $index => $product)
+                    <div class="flex items-center gap-4 p-3 bg-white bg-opacity-5 rounded-xl">
+                        <div class="w-8 h-8 rounded-full bg from-blue-400 to-purple-500 flex items-center justify-center  font-bold text-sm">
+                            #{{ $index + 1 }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold  truncate">{{ $product->title }}</p>
+                            <p class="text-xs text-gray-400">{{ $product->total_sold ?? 0 }} sold</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-green-400">Rp {{ number_format($product->total_revenue ?? 0, 0, ',', '.') }}</p>
+                        </div>
                     </div>
-                    @endif
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-semibold text-gray-900 truncate">{{ $product->title }}</h4>
-                        <p class="text-sm text-red-600 font-bold">Only {{ $product->stock }} left!</p>
-                    </div>
+                    @endforeach
                 </div>
-                @endforeach
             </div>
+
         </div>
-        @endif
 
     </div>
 </div>
-
 
 <script>
-function salesReport() {
+function masterDashboard() {
     return {
-        isDownloading: false,
-        reportData: {
-            month: new Date().getMonth() + 1,
-            year: new Date().getFullYear()
-        },
+        revenueChart: null,
 
-        async downloadReport() {
-            if (!confirm('Generate sales report for ' + this.getMonthName(this.reportData.month) + ' ' + this.reportData.year + '?')) {
-                return;
-            }
-
-            this.isDownloading = true;
-
-            try {
-                const response = await fetch(`{{route('reports.download')}}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify(this.reportData)
-                });
-
-                if (!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.message || 'Failed to generate report');
-                }
-
-                // Download file
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `sales_report_${this.reportData.year}_${String(this.reportData.month).padStart(2, '0')}.xlsx`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-
-                alert('Report downloaded successfully!');
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to generate report: ' + error.message);
-            } finally {
-                this.isDownloading = false;
-            }
-        },
-
-        getMonthName(month) {
-            const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
-                          'July', 'August', 'September', 'October', 'November', 'December'];
-            return months[month];
-        }
-    }
-}
-
-
-function sellerDashboard() {
-    return {
         init() {
-            this.initRevenueChart();
+            setTimeout(() => {
+                this.initRevenueChart();
+            }, 100);
         },
 
         initRevenueChart() {
             const ctx = document.getElementById('revenueChart');
             if (!ctx) return;
 
-            const revenueData = @json($revenueData);
+            if (this.revenueChart) {
+                this.revenueChart.destroy();
+            }
+
+            const existingChart = Chart.getChart(ctx);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            const revenueData = @json($revenueChart);
             
             const labels = revenueData.map(item => {
                 const date = new Date(item.date);
@@ -451,22 +370,22 @@ function sellerDashboard() {
             
             const data = revenueData.map(item => item.revenue);
 
-            new Chart(ctx, {
+            this.revenueChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
                         label: 'Revenue',
                         data: data,
-                        borderColor: 'rgb(37, 99, 235)',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         tension: 0.4,
                         fill: true,
-                        pointBackgroundColor: 'rgb(37, 99, 235)',
+                        pointBackgroundColor: 'rgb(59, 130, 246)',
                         pointBorderColor: '#fff',
                         pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
                 options: {
@@ -496,15 +415,24 @@ function sellerDashboard() {
                         y: {
                             beginAtZero: true,
                             ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
                                 callback: function(value) {
-                                    return 'Rp ' + (value / 1000) + 'K';
+                                    if (value >= 1000000) {
+                                        return 'Rp ' + (value / 1000000) + 'M';
+                                    } else if (value >= 1000) {
+                                        return 'Rp ' + (value / 1000) + 'K';
+                                    }
+                                    return 'Rp ' + value;
                                 }
                             },
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
+                                color: 'rgba(255, 255, 255, 0.1)'
                             }
                         },
                         x: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            },
                             grid: {
                                 display: false
                             }
