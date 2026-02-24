@@ -84,11 +84,13 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Category $Category)
+    public function update(Request $request, $id)
     {
+        $category = Category::findOrFail($id);
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $Category->id,
-            'slug' => 'required|string|max:255|unique:categories,slug,' . $Category->id,
+            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'slug' => 'required|string|max:255|unique:categories,slug,' . $category->id,
+            'description' => 'nullable|string'
         ], [
             'name.required' => 'The category name is required.',
             'name.unique' => 'The category name must be unique.',
@@ -96,8 +98,8 @@ class CategoryController extends Controller
             'slug.unique' => 'The category slug must be unique.',
         ]);
 
-        $Category->update(
-            $request->only(['name', 'slug'])
+        $category->update(
+            $request->only(['name', 'slug', 'description'])
         );
 
         return redirect()->back()->with('success', 'Category updated successfully.');
@@ -106,14 +108,15 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Category $Category)
+    public function destroy($id)
     {
+        $category = Category::findOrFail($id);
         // Check if category has products
-        if ($Category->products()->count() > 0) {
+        if ($category->products()->count() > 0) {
             return redirect()->back()->with('error', 'Cannot delete category with products. Please delete all products first.');
         }
 
-        $Category->delete();
+        $category->delete();
 
         return redirect()->back()->with('success', 'Category deleted successfully.');
     }

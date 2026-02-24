@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
+<div class="max-w-7xl mx-auto px-4 py-6" x-data="{ showModal: false, editMode: false, selectedCategory: null }">
 
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
@@ -10,51 +10,30 @@
             <p class="text-gray-500 text-sm">Manage all platform users</p>
         </div>
         <a href="{{ route('users.create') }}"
-           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
             <i class="fas fa-plus"></i>
             Add New User
         </a>
     </div>
 
-    <!-- Success Message -->
-    @if(session('success'))
-    <div class="bg-green-100 text-green-700 px-4 py-3 rounded-lg mb-4 flex justify-between items-center">
-        <div class="flex items-center gap-2">
-            <i class="fas fa-check-circle"></i>
-            {{ session('success') }}
-        </div>
-        <button onclick="this.parentElement.remove()" class="text-green-700">×</button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="bg-red-100 text-red-700 px-4 py-3 rounded-lg mb-4 flex justify-between items-center">
-        <div class="flex items-center gap-2">
-            <i class="fas fa-exclamation-circle"></i>
-            {{ session('error') }}
-        </div>
-        <button onclick="this.parentElement.remove()" class="text-red-700">×</button>
-    </div>
-    @endif
-
     <!-- Search & Filter -->
     <div class="bg-white rounded-xl shadow-sm border p-4 mb-6">
         <form method="GET" action="{{ route('users') }}"
-              class="grid md:grid-cols-3 gap-4">
+            class="grid md:grid-cols-3 gap-4">
 
             <div>
                 <label class="block text-sm mb-1">Search</label>
                 <input type="text"
-                       name="search"
-                       value="{{ request('search') }}"
-                       placeholder="Search by name, email, or phone..."
-                       class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200">
+                    name="search"
+                    value="{{ request('search') }}"
+                    placeholder="Search by name, email, or phone..."
+                    class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200">
             </div>
 
             <div>
                 <label class="block text-sm mb-1">Role</label>
                 <select name="role"
-                        class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200">
+                    class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200">
                     <option value="">All Roles</option>
                     @foreach($roles as $role)
                     <option value="{{ $role->id }}"
@@ -67,7 +46,7 @@
 
             <div class="flex items-end">
                 <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full flex justify-center items-center gap-2">
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full flex justify-center items-center gap-2">
                     <i class="fas fa-search"></i>
                     Search
                 </button>
@@ -106,7 +85,7 @@
 
                                 @if($user->img)
                                 <img src="{{ asset('storage/profile/' . $user->img) }}"
-                                     class="w-10 h-10 rounded-full object-cover">
+                                    class="w-10 h-10 rounded-full object-cover">
                                 @else
                                 <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
                                     {{ substr($user->name,0,1) }}
@@ -155,26 +134,49 @@
                         <td class="px-4 py-3">
                             <div class="flex gap-2">
 
-                                <a href="{{ route('users.edit',$user->id) }}"
-                                   class="border px-2 py-1 rounded text-blue-600 hover:bg-blue-50">
-                                    Edit
-                                </a>
+                                <template x-if="$store.status.onlineUsers.some(u => u.id === {{ $user->id }})">
+                                    <div class="flex gap-2">
 
-                                @if($user->id !== auth()->id())
-                                <form method="POST"
-                                      action="{{ route('users.destroy',$user->id) }}"
-                                      onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                        <a href="{{ route('users.edit',$user->id) }}"
+                                            class="border px-2 py-1 rounded text-blue-600 opacity-50 pointer-events-none">
+                                            Edit
+                                        </a>
 
-                                    @csrf
-                                    @method('DELETE')
+                                        @if($user->id !== auth()->id())
+                                        <button disabled
+                                            class="border px-2 py-1 rounded text-slate-500">
+                                            Delete
+                                        </button>
+                                        @endif
 
-                                    <button type="submit"
-                                            class="border px-2 py-1 rounded text-red-600 hover:bg-red-50">
-                                        Delete
-                                    </button>
+                                    </div>
+                                </template>
 
-                                </form>
-                                @endif
+                                <template x-if="!$store.status.onlineUsers.some(u => u.id === {{ $user->id }})">
+                                    <div class="flex gap-2">
+
+                                        <a href="{{ route('users.edit',$user->id) }}"
+                                            class="border px-2 py-1 rounded text-blue-600 hover:bg-blue-50">
+                                            Edit
+                                        </a>
+
+                                        @if($user->id !== auth()->id())
+                                        <form method="POST"
+                                            action="{{ route('users.destroy',$user->id) }}"
+                                            onsubmit="return confirm('Are you sure you want to delete this user?')">
+
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button type="submit"
+                                                class="border px-2 py-1 rounded text-red-600 hover:bg-red-50">
+                                                Delete
+                                            </button>
+                                        </form>
+                                        @endif
+
+                                    </div>
+                                </template>
 
                             </div>
                         </td>

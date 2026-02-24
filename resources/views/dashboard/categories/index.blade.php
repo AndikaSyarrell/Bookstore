@@ -122,7 +122,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Posted from</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -161,10 +161,10 @@
                             <span class="text-sm text-gray-600">{{ Str::limit($category->description,5) }}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-medium text-gray-900">{{ $category->user->name ?? 'N/A' }}</span>
+                            <span class="text-sm font-medium text-gray-900">{{ $category->products->count() ?? 0 }}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            @if ($category->products()->count() > 1)
+                            @if ($category->products()->count() > 0)
                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                 Active
                             </span>
@@ -265,10 +265,11 @@
 
                 <!-- Modal Body -->
                 <form class="px-6 py-6 space-y-6"
-                    :action="editMode ? '{{ route('categories.update', ['category' => '__ID__']) }}'.replace('__ID__', selectedCategory.id) : '{{ route('categories.store') }}'"
+                    :action="editMode ? '{{ route('categories.update', ['id' => '__ID__']) }}'.replace('__ID__', selectedCategory.id) : '{{ route('categories.store') }}'"
                     method="POST">
                     <!-- Category Name -->
                     @csrf
+                    <input type="hidden" name="_method" :value="editMode ? 'PUT' : 'POST'">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Category Name <span class="text-red-500">*</span>

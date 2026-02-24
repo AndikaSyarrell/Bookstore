@@ -61,8 +61,13 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('dashboard.user.index')
-            ->with('success', 'User updated successfully');
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User updated successfully.',
+                'data' => $user
+            ], 200);
+        }
     }
 
     /**
@@ -84,7 +89,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('dashboard.user.index')
+        return redirect()->route('users')
             ->with('success', 'User deleted successfully');
     }
 

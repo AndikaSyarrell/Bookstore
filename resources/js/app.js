@@ -41,24 +41,39 @@ window.onlineUsers = [];
 //         console.error('%c[ERROR] %cGagal terhubung ke Reverb Server!', 'color: white; background: red; padding: 2px 5px; border-radius: 3px;', 'color: red;');
 //         console.error('Detail Error:', error);
 //     });
+Echo.join('online-users')
+    .here(users => {
+        Alpine.store('status').setUsers(users);
+    })
+    .joining(user => {
+        Alpine.store('status').addUser(user);
+    })
+    .leaving(user => {
+        Alpine.store('status').removeUser(user);
+    });
 
 document.addEventListener('alpine:init', () => {
-    // Membuat store global di Alpine
+
     Alpine.store('status', {
         onlineUsers: [],
-        
+
         setUsers(users) {
             this.onlineUsers = users;
         },
+
         addUser(user) {
-            this.onlineUsers.push(user);
+            if (!this.onlineUsers.some(u => u.id === user.id)) {
+                this.onlineUsers.push(user);
+            }
         },
+
         removeUser(user) {
-            this.onlineUsers = this.onlineUsers.filter(u => u.id !== user.id);
+            this.onlineUsers =
+                this.onlineUsers.filter(u => u.id !== user.id);
         }
     });
-});
 
+});
 
 // window.Echo.join('chat-room')
 //     .here((users) => {

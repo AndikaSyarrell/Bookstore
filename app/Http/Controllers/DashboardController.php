@@ -18,15 +18,15 @@ use Illuminate\Contracts\Pagination\Paginator;
 class DashboardController extends Controller
 {
     public function index()
-    {
-        if (Auth::check() && Auth::user()->role->name === 'master') {
-            return $this->masterDashboard();
-        } elseif(Auth::check() && Auth::user()->role->name === 'seller'){
-            return $this->sellerDashboard();
-        }else {
-            return view('errors.index', ['message' => 'unauthorized']);
-        }
-    }
+{
+    $role = Auth::user()?->role?->name;
+
+    return match($role) {
+        'master' => $this->masterDashboard(),
+        'seller' => $this->sellerDashboard(),
+        default => view('errors.index', ['message' => 'unauthorized']),
+    };
+}
 
     public function masterDashboard(){
          // Overall Statistics
@@ -247,7 +247,7 @@ class DashboardController extends Controller
                 ->get()
                 ->pluck('count', 'status');
 
-            return view('dashboard.index', compact(
+            return view('dashboard.seller.dashboard', compact(
                 'stats',
                 'recentOrders',
                 'topProducts',

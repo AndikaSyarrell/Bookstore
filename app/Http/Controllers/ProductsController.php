@@ -73,7 +73,7 @@ class ProductsController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            "title" => 'required|string|max:255',
+            "title" => 'unique:products,title|required|string|max:255',
             "author" => "sometimes|string|max:255",
             "category" => "required|exists:categories,id",
             "price" => "required|numeric",

@@ -10,6 +10,8 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FaQController;
+use App\Http\Controllers\MasterController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
@@ -48,6 +50,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', [BuyerController::class, 'index'])->name('homepage');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/reports/download', [SalesReportController::class, 'generateMonthlyReport'])->name('reports.download');
+
+    Route::get('/help/seller', [FaQController::class, 'seller'])->name('help.seller');
+    Route::get('/help/buyer', [FaQController::class, 'buyer'])->name('help.buyer');
 
     // View refund requests
     Route::get('/refunds', [RefundController::class, 'sellerRefunds'])->name('seller.refunds');
@@ -91,6 +96,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('/home/cart')->controller(CartController::class)->group(function () {
         Route::get('/get', 'getCart')->name('cart.get');
         Route::post('/store', 'add')->name('cart.store');
+        Route::post('/sync', 'sync')->name('cart.sync');
         Route::put('/update/{id}', 'update')->name('cart.update');
         Route::delete('/remove/{id}', 'remove')->name('cart.remove');
         Route::post('/checkout/process', [OrderController::class, 'processCheckout'])->name('checkout.process');
@@ -135,14 +141,10 @@ Route::middleware('auth')->group(function () {
 
     //dashboard admin and seller
     Route::prefix('/dashboard')->controller(DashboardController::class)->group(function () {
-        Route::get('/profile', 'showProfile')->name('profile');
-
         Route::get('/settings', 'showSettings')->name('settings');
         Route::post('/settings/update', 'updateSettings')->name('settings.update');
 
         Route::get('/users', 'showUsers')->name('users');
-
-        Route::get('/categories', 'showCategories')->name('categories');
 
         Route::get('/products', 'showProducts')->name('products');
 
@@ -153,25 +155,26 @@ Route::middleware('auth')->group(function () {
         Route::get('/chats', 'showChats')->name('chats');
     });
 
-    Route::prefix('/dashboard/refund')->controller(RefundController::class)->name('seller.')->group(function(){
-        
+    Route::prefix('/dashboard/refund')->controller(RefundController::class)->name('seller.')->group(function () {
+
         Route::get('/', 'sellerDashboard')->name('refunds');
-        
+
         // View refund detail
         Route::get('/{refund}', 'show')->name('refunds.show');
-        
+
         // Approve refund (with proof upload)
         Route::post('/{refund}/approve', 'approveRefund')->name('refund.approve');
-        
+
         // Reject refund
         Route::post('/{refund}/reject', 'rejectRefund')->name('refund.reject');
     });
 
     Route::prefix('/dashboard/categories')->controller(CategoryController::class)->group(function () {
+        Route::get('/', [DashboardController::class, 'showCategories'])->name('categories.index');
         Route::post('/store', 'store')->name('categories.store');
-        Route::post('/{category}/update', 'update')->name('categories.update');
-        Route::delete('/{category}/delete', 'destroy')->name('categories.delete');
-        Route::get('/categories/search', 'search')->name('categories.search');
+        Route::put('/update/{id}', 'update')->name('categories.update');
+        Route::delete('/{id}/delete', 'destroy')->name('categories.delete');
+        Route::get('/search', 'search')->name('categories.search');
     });
 
     Route::prefix('/dashboard/products')->controller(ProductsController::class)->group(function () {
@@ -206,6 +209,23 @@ Route::middleware('auth')->group(function () {
         Route::put('/profile/bank/{id}', 'updateBankAccount')->name('bank.update');
         Route::post('/profile/bank/{id}/primary', 'setPrimaryBankAccount')->name('bank.primary');
         Route::delete('/profile/bank/{id}', 'deleteBankAccount')->name('bank.delete');
+    });
+
+    Route::prefix('/dashbaord/profile-master')->controller(MasterController::class)->name('master.')->group(function () {
+        // Profile page
+        Route::get('/', 'index')->name('profile');
+
+        // Update profile
+        Route::put('/', 'updateProfile')->name('profile.update');
+
+        // Update photo
+        Route::post('/photo', 'updatePhoto')->name('profile.photo.update');
+
+        // Remove photo
+        Route::delete('/photo', 'removePhoto')->name('profile.photo.remove');
+
+        // Update password
+        Route::put('/password', 'updatePassword')->name('profile.password.update');
     });
 
     Route::prefix('/dashboard/users')->controller(UserController::class)->group(function () {

@@ -68,7 +68,7 @@ class RefundService
                     'refund_id' => $refund->id,
                     'amount' => $refund->refund_amount,
                 ],
-                route('dashboard.refund.index', $refund->id)
+                route('order.show', $order->id)
             );
 
             return $refund;
@@ -208,7 +208,7 @@ class RefundService
         // Restore order status
         $previousStatus = $refund->order->payment && $refund->order->payment->status === 'paid' 
             ? 'processing' 
-            : 'pending_payment';
+            : 'pending_verification';
             
         $refund->order->update(['status' => $previousStatus]);
 

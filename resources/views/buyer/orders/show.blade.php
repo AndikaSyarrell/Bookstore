@@ -293,7 +293,7 @@
                 @endif
 
                 <!-- Seller: Payment Verification -->
-                @if(Auth::id() === $order->seller_id && $order->status === 'pending_verification')
+                @if(Auth::id() === $order->seller_id && $order->status === 'pending_verification' || 'pending_refund')
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <h2 class="text-lg font-bold text-gray-900 mb-4">Payment Verification</h2>
 
@@ -309,6 +309,7 @@
                     </div>
                     @endif
 
+                    @if($order->status === 'pending_verification')
                     <div class="flex gap-3">
                         <button
                             @click="verifyPayment('approve')"
@@ -321,6 +322,7 @@
                             Reject Payment
                         </button>
                     </div>
+                    @endif
                 </div>
                 @endif
 
@@ -864,7 +866,7 @@
         </div>
 
         <!-- refund approval modal -->
-
+         @if(isset($refund))
         <div
             x-show="showRefundApprovalModal"
             x-cloak
@@ -960,7 +962,7 @@
 
                 <!-- Upload Proof -->
                 @if($refund->status=='pending' && $refund->hasBuyerBankDetails())
-                <form @submit.prevent="approveRefund()" class="space-y-3">
+                <form @submit.prevent="approveRefund({{ $refund->id }})" class="space-y-3">
                     <input type="file"
                         @change="handleProofUpload($event)"
                         required
@@ -978,7 +980,7 @@
                             Approve
                         </button>
                         <button type="button"
-                            @click="rejectRefund()"
+                            @click="rejectRefund({{ $refund->id }})"
                             class="flex-1 bg-red-600 text-white py-2 rounded-lg">
                             Reject
                         </button>
@@ -1008,6 +1010,7 @@
                 </button>
             </div>
         </div>
+        @endif
 
     </div>
 </div>
@@ -1198,7 +1201,7 @@
 
 
 
-            async approveRefund() {
+            async approveRefund(id) {
                 if (!this.proofRefundFile) {
                     alert('Please upload transfer proof');
                     return;
@@ -1215,7 +1218,7 @@
                     formData.append('refund_proof', this.proofRefundFile);
                     formData.append('notes', this.approvalData.notes);
 
-                    const response = await fetch(`{{ route('seller.refund.approve', $refund->id) }}`, {
+                    const response = await fetch(`{{ route('seller.refund.approve', 'id') }}`.replace('id', id), {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -1258,8 +1261,8 @@
                 }
             },
 
-            async rejectRefund() {
-                if (!this.rejectionData.notes) {
+            async rejectRefund(id) {
+                if (!this.approvalData.notes) {
                     alert('Please provide a rejection reason');
                     return;
                 }
@@ -1271,13 +1274,13 @@
                 this.isSubmitting = true;
 
                 try {
-                    const response = await fetch(`{{ route('seller.refund.reject', $refund->id) }}`, {
+                    const response = await fetch(`{{ route('seller.refund.reject', '__ID__') }}`.replace('__ID__', id), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         },
-                        body: JSON.stringify(this.rejectionData)
+                        body: JSON.stringify(this.approvalData)
                     });
 
                     const data = await response.json();
@@ -1308,10 +1311,10 @@
                 const text = `
 Transfer Details
 ━━━━━━━━━━━━━━━━━━━━━
-Bank: {{ $refund->bank_name }}
-Account: {{ $refund->bank_account_number }}
-Name: {{ $refund->bank_account_name }}
-Amount: Rp {{ number_format($refund->refund_amount, 0, ',', '.') }}
+Bank: {{ $refund->bank_name ?? '-'}}
+Account: {{ $refund->bank_account_number ?? '-'}}
+Name: {{ $refund->bank_account_name ?? '-'}}
+Amount: Rp {{ isset($refund->refund_amount) ? number_format($refund->refund_amount, 0, ',', '.') : '-' }}
 ━━━━━━━━━━━━━━━━━━━━━
             `.trim();
 

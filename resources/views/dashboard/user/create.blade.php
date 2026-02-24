@@ -434,24 +434,20 @@
 </div>
 
 <script>
-
-
     function createUser() {
         return {
             formData: {
-                name: "{{ $user->name ?? '' }}",
-                email: "{{ $user->email ?? '' }}",
-                no_telp: "{{ $user->no_telp ?? '' }}",
-                birth_date: "{{ $user->birth_date ? date('Y-m-d', strtotime($user->birth_date)) : '' }}",
-                // gender: "",
-                address: "{{ $user->address ?? '' }}",
-                role: "{{ $user->role_id ?? '' }}",
-                // status: 'active',
+                name: "{{ isset($user) ? $user->name : '' }}",
+                email: "{{ isset($user) ? $user->email : '' }}",
+                no_telp: "{{ isset($user) ? $user->no_telp : '' }}",
+                birth_date: "{{ isset($user) && $user->birth_date ? date('Y-m-d', strtotime($user->birth_date)) : '' }}",
+                address: "{{ isset($user) ? $user->address : '' }}",
+                role: "{{ isset($user) ? $user->role_id : '' }}",
                 password: "",
                 password_confirmation: "",
                 send_welcome_email: true,
                 require_password_change: false,
-                img: "{{ Storage::url('/profile/'.$user->img) ?? '' }}"
+                img: "{{ isset($user) && $user->img ? Storage::url('profile/'.$user->img) : '' }}"
             },
             errors: {},
             loading: false,
@@ -459,7 +455,7 @@
             showConfirmPassword: false,
             uploadModalOpen: false,
             selectedFile: null,
-            previewImage: "{{ Storage::url('/profile/'.$user->img) ?? '' }}",
+            previewImage: "{{ isset($user) && $user->img ? Storage::url('profile/'.$user->img) : '' }}",
             uploadError: '',
             dragOver: false,
             imageZoom: 100,
@@ -550,10 +546,10 @@
             validateField(field) {
                 this.errors[field] = '';
 
-                const user = @json($user);
-                                
-                if (typeof user !== 'undefined') {
-                    return; // Skip validation if $user is set
+                const hasUser = @json(isset($user));
+
+                if (hasUser) {
+                    return; // Skip validation jika edit mode
                 }
 
                 switch (field) {
@@ -638,19 +634,22 @@
                     // 1. Gunakan FormData untuk mengirim File/Image
                     const formDataPayload = new FormData();
 
-                    // Masukkan semua data teks ke FormData
+                    // Kirim semua kecuali img
                     for (const key in this.formData) {
-                        formDataPayload.append(key, this.formData[key]);
+                        if (key !== 'img') {
+                            formDataPayload.append(key, this.formData[key]);
+                        }
                     }
 
+                    // Kirim file jika ada
                     if (this.selectedFile) {
-                        formDataPayload.append('img', this.selectedFile); // pastikan key-nya 'img'
+                        formDataPayload.append('img', this.selectedFile);
                     }
 
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
                     const url = "{{ isset($user) ? route('users.update', $user->id) : route('users.store') }}";
-                    
+
 
                     // 2. Lakukan Fetch API
                     const response = await fetch(url, {
@@ -667,22 +666,27 @@
 
                     if (response.ok) {
                         alert('Data berhasil disimpan!');
-                        this.formData = {
-                            name: '',
-                            email: '',
-                            no_telp: '',
-                            birth_date: '',
-                            address: '',
-                            role: '',
-                            password: '',
-                            password_confirmation: '',
-                            send_welcome_email: true,
-                            require_password_change: false,
-                            img: ''
-                        };
-                        this.selectedFile = null;
-                        this.previewImage = null;
-                        this.errors = {};
+
+                        const isEdit = @json(isset($user));
+
+                        if (isEdit) {
+                            return;
+                        } else {
+                            // Mode STORE → kosongkan data
+                            this.formData = {
+                                name: "",
+                                email: "",
+                                no_telp: "",
+                                birth_date: "",
+                                address: "",
+                                role: "",
+                                password: "",
+                                password_confirmation: "",
+                                send_welcome_email: true,
+                                require_password_change: false,
+                                img: ""
+                            };
+                        }
                         // window.location.href = '/admin/categories';
                     } else {
                         // Menangani error validasi dari Laravel

@@ -69,7 +69,7 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                     </svg>
-                    <span class="font-medium">Preorder</span>
+                    <span class="font-medium">Order's</span>
                 </a>
                 <a href="{{ route('chats.index') }}"
                     class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
@@ -79,11 +79,11 @@
                     <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24">
                         <path fill="rgb(75, 85, 99)" d="M5 18v3.766l1.515-.909L11.277 18H16c1.103 0 2-.897 2-2V8c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2zM4 8h12v8h-5.277L7 18.234V16H4z" />
                         <path fill="rgb(75, 85, 99)" d="M20 2H8c-1.103 0-2 .897-2 2h12c1.103 0 2 .897 2 2v8c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2" />
-                        </svg>
-                            <span class="font-medium">Chats</span>
+                    </svg>
+                    <span class="font-medium">Chats</span>
                 </a>
                 @elseif(auth()->check() && auth()->user()->role->name === 'master')
-                <a href="{{ route('categories') }}"
+                <a href="{{ route('categories.index') }}"
                     class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
                       {{ request()->routeIs('categories.*') || request()->routeIs('categories')
                           ? 'bg-indigo-600 text-white shadow-md' 
@@ -115,15 +115,28 @@
                     <span class="font-medium">General</span>
                 </a> -->
 
-                <a href="{{ auth()->user()->role === 'master' ? route('masterProfile') : route('sellerProfile.index') }}"
+                <a href="{{ optional(auth()->user()->role)->name === 'master' 
+            ? route('master.profile') 
+            : route('sellerProfile.index') }}"
                     class="flex items-center px-4 py-3 mb-2 rounded-lg transition-colors duration-200
-                      {{ request()->routeIs('settings.profile') 
+                      {{ request()->routeIs('master.*') || request()->routeIs('master') || request()->routeIs('selerProfile.*') || request()->routeIs('sellerProfile')
                           ? 'bg-indigo-600 text-white shadow-md' 
                           : 'text-gray-700 hover:bg-gray-100' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                     <span class="font-medium">Profile</span>
+                </a>
+            </div>
+
+            <!-- Logout Button -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <a href="{{ route('help.seller') }}">
+                    <button type="button"
+                        class="flex items-center w-full px-4 py-3 rounded-lg transition-colors duration-200 text-red-600 hover:bg-red-50">
+                        
+                        <span class="font-medium">FaQ</span>
+                    </button>
                 </a>
             </div>
 

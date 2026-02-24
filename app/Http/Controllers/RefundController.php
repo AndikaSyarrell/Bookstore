@@ -177,7 +177,7 @@ class RefundController extends Controller
             abort(403);
         }
 
-        return view('dashboard.refund.index', compact('refund'));
+        return view('buyer.orders.index', compact('refund'));
     }
 
     // /**

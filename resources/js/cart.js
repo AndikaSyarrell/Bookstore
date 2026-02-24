@@ -183,7 +183,7 @@
         // Sync cart with server
         async syncWithServer() {
             try {
-                const response = await fetch('/cart/sync', {
+                const response = await fetch('{{ route("cart.sync") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

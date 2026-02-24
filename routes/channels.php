@@ -40,3 +40,10 @@ Broadcast::channel('notifications.{userId}', function ($user, $userId) {
     // User can only listen to their own notifications
     return (int) $user->id === (int) $userId;
 });
+
+Broadcast::channel('online-users', function ($user) {
+    return [
+        'id' => $user->id,
+        'name' => $user->name
+    ];
+});

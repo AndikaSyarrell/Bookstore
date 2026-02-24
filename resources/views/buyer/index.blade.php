@@ -135,6 +135,10 @@
                                 <p class="text-xs text-gray-600 mb-2">{{ $product['author'] }}</p>
                             @endif
 
+                            @if(isset($product['']))
+                                <p class="text-xs text-gray-600 mb-2">{{ $product['author'] }}</p>
+                            @endif
+
                             <!-- Price & Sold -->
                             <div class="flex items-center justify-between mb-3">
                                 <span class="text-lg font-bold text-blue-600">
