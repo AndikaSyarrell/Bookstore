@@ -277,17 +277,17 @@
                 </div>
 
                 <div class="flex gap-3">
-                    <button 
+                    <!-- <button 
                         @click="updateStatus({{ $order->id }}, 'shipped')"
                         class="flex-1 px-4 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
                     >
                         Mark as Shipped
-                    </button>
+                    </button> -->
                     <a 
                         href="{{ route('order.show-seller', $order->id) }}"
                         class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
                     >
-                        View Detail
+                        Continue Proccess
                     </a>
                 </div>
             </div>

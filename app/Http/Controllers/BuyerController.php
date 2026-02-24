@@ -50,7 +50,7 @@ class BuyerController extends Controller
                         'price' => (float) $product->price,
                         'sold' => (int) $product->sold,
                         // data tambahan jika diperlukan:
-                        'author' => $product->author,
+                        'seller' => $product->seller->name,
                         'stock' => $product->stock,
                     ];
                 });

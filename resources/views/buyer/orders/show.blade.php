@@ -428,7 +428,7 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="mt-6 space-y-3">
+                    <div class="mt-6 space-y-3 my-4">
                         @if(Auth::id() === $order->buyer_id && in_array($order->status, ['pending_payment']))
                         <button
                             @click="cancelOrder()"
@@ -437,7 +437,7 @@
                         </button>
                         @endif
 
-                        @if(Auth::id() === $order->buyer_id && in_array($order->status, ['pending_verification']))
+                        @if(Auth::id() === $order->buyer_id && in_array($order->status, ['pending_verification', 'proccessing']))
                         <button
                             @click="showRefundModal = true"
                             class="w-full px-4 py-2 border border-red-600 text-red-600 font-medium rounded-lg hover:bg-red-50">
@@ -445,33 +445,39 @@
                         </button>
                         @endif
 
-                        <a href="{{ route('order.index') }}" class="block w-full px-4 py-2 text-center border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50">
+                        <a href="{{ auth()->user()->role->name === 'seller' ? route('preorders') : route('order.index')}}" class="block w-full px-4 py-2 text-center border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50">
                             Back to Orders
                         </a>
                     </div>
+
+                    @if(Auth::id() === $order->seller_id && $order->status === 'processing')
+                        <!-- Upload Resi Button -->
+                    <button
+                        @click="openShippingModal()"
+                        class="w-full px-4 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Upload Shipping Receipt
+                    </button>
+                    @endif
+
                     <!-- Seller Info -->
-                    <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="my-3 py-3 border-t border-gray-200">
                         <h3 class="text-sm font-semibold text-gray-900 mb-2">Seller Information</h3>
                         <p class="text-sm text-gray-700">{{ $order->seller->name }}</p>
                         <p class="text-sm text-gray-600">{{ $order->seller->email }}</p>
                     </div>
+
+                    
                 </div>
+                
             </div>
+
 
         </div>
 
         @if(Auth::id() === $order->seller_id && $order->status === 'processing')
-
-        <!-- Upload Resi Button -->
-        <button
-            @click="openShippingModal()"
-            class="w-full px-4 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-            Upload Shipping Receipt
-        </button>
-
         <!-- Upload Resi Modal -->
         <div
             x-show="showShippingModal"

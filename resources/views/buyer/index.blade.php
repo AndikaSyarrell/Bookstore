@@ -131,12 +131,8 @@
                                 </h3>
                             </a>
                             
-                            @if(isset($product['author']))
-                                <p class="text-xs text-gray-600 mb-2">{{ $product['author'] }}</p>
-                            @endif
-
-                            @if(isset($product['']))
-                                <p class="text-xs text-gray-600 mb-2">{{ $product['author'] }}</p>
+                            @if(isset($product['seller']))
+                                <p class="text-xs text-gray-600 mb-2">{{ $product['seller'] }}</p>
                             @endif
 
                             <!-- Price & Sold -->

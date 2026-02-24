@@ -42,6 +42,42 @@
             this.saveToLocalStorage();
         },
 
+        // Save cart to localStorage
+        saveToLocalStorage() {
+            try {
+                localStorage.setItem('cart_data', JSON.stringify({
+                    items: this.items,
+                    count: this.count,
+                    total: this.total,
+                    timestamp: Date.now()
+                }));
+            } catch (error) {
+                console.error('Error saving cart to localStorage:', error);
+            }
+        },
+
+        // Load cart from localStorage
+        loadFromLocalStorage() {
+            try {
+                const data = localStorage.getItem('cart_data');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    
+                    // Check if data is not too old (24 hours)
+                    const hoursSinceUpdate = (Date.now() - parsed.timestamp) / (1000 * 60 * 60);
+                    if (hoursSinceUpdate < 24) {
+                        this.items = parsed.items || [];
+                        this.count = parsed.count || 0;
+                        this.total = parsed.total || 0;
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart from localStorage:', error);
+            }
+            return false;
+        },
+
         // Update item quantity
         updateQuantity(itemId, quantity) {
             const index = this.items.findIndex(i => i.id === itemId);
@@ -135,41 +171,7 @@
             window.dispatchEvent(event);
         },
 
-        // Save cart to localStorage
-        saveToLocalStorage() {
-            try {
-                localStorage.setItem('cart_data', JSON.stringify({
-                    items: this.items,
-                    count: this.count,
-                    total: this.total,
-                    timestamp: Date.now()
-                }));
-            } catch (error) {
-                console.error('Error saving cart to localStorage:', error);
-            }
-        },
-
-        // Load cart from localStorage
-        loadFromLocalStorage() {
-            try {
-                const data = localStorage.getItem('cart_data');
-                if (data) {
-                    const parsed = JSON.parse(data);
-                    
-                    // Check if data is not too old (24 hours)
-                    const hoursSinceUpdate = (Date.now() - parsed.timestamp) / (1000 * 60 * 60);
-                    if (hoursSinceUpdate < 24) {
-                        this.items = parsed.items || [];
-                        this.count = parsed.count || 0;
-                        this.total = parsed.total || 0;
-                        return true;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading cart from localStorage:', error);
-            }
-            return false;
-        },
+        
 
         // Format currency
         formatCurrency(amount) {

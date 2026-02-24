@@ -7,15 +7,15 @@
         <!-- Page Header -->
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Categories Management</h1>
-                <p class="text-gray-600 mt-2">Manage your content categories</p>
+                <h1 class="text-3xl font-bold text-gray-900">Product Management</h1>
+                <p class="text-gray-600 mt-2">Manage your content Product</p>
             </div>
             <a href="{{ route('products.create') }}"
                 class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
-                Add Category
+                Add Product
             </a>
         </div>
 
@@ -24,7 +24,7 @@
             <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-indigo-500">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Total Categories</p>
+                        <p class="text-sm font-medium text-gray-600">Total Product</p>
                         <p class="text-2xl font-bold text-gray-900 mt-1">24</p>
                     </div>
                     <div class="bg-indigo-100 rounded-full p-3">
@@ -83,7 +83,7 @@
             <form action="{{ route('products.search') }}" method="GET" class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex-1 max-w-md">
                     <div class="relative">
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search categories..."
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search Product..."
                             class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                         <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
@@ -110,7 +110,7 @@
             </form>
         </div>
 
-        <!-- Categories Table -->
+        <!-- Product Table -->
         <div class="bg-white rounded-lg shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -123,7 +123,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Category</th>
+                                Product</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Author</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price
@@ -143,7 +143,7 @@
                         @if ($products->isEmpty())
                             <tr>
                                 <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
-                                    No categories found.
+                                    No Product found.
                                 </td>
                             </tr>
                         @else
@@ -197,7 +197,7 @@
                                                 @method('DELETE')
                                                 @csrf
                                                 <button type="submit" class="text-red-600 hover:text-red-900"
-                                                    onclick="return confirm('Are you sure you want to delete this category?')">Delete</button>
+                                                    onclick="return confirm('Are you sure you want to delete this Product?')">Delete</button>
                                             </form>
                                         @else
                                             <button class="text-gray-400 cursor-not-allowed" disabled>Delete</button>

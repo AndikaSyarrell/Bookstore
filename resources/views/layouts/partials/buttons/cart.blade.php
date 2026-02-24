@@ -132,7 +132,6 @@
             cartItems: [],
             cartCount: 0,
             cartTotal: 0,
-
             
 
             init() {
@@ -149,12 +148,12 @@
             },
 
             loadCart() {
-                if (window.cartStore) {
-                    this.cartItems = window.cartStore.items;
-                    this.cartCount = window.cartStore.count;
-                    this.cartTotal = window.cartStore.total;
-                }
-            },
+    if (window.cartStore) {
+        this.cartItems = [...window.cartStore.items]; // clone array
+        this.cartCount = window.cartStore.count;
+        this.cartTotal = window.cartStore.total;
+    }
+},
 
             toggleCart() {
                 this.isOpen = !this.isOpen;

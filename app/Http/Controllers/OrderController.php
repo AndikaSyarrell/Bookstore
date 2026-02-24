@@ -85,6 +85,14 @@ class OrderController extends Controller
 
                 // Create order details
                 foreach ($sellerItems as $item) {
+                    $product = Product::find($item['product_id']);
+                    // Cek stok
+                    if ($product->stock < $item['quantity']) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $product->name . ' stock is insufficient'
+                        ], 422);
+                    }
                     OrderDetail::create([
                         'order_id' => $order->id,
                         'product_id' => $item['product_id'],
@@ -96,7 +104,6 @@ class OrderController extends Controller
                     CartItem::where('id', $item['cart_item_id'])->delete();
 
                     // Reduce stock
-                    $product = Product::find($item['product_id']);
                     $product->decrement('stock', $item['quantity']);
                 }
 
@@ -154,34 +161,34 @@ class OrderController extends Controller
      * Show order detail
      */
     public function show(Request $request, $id)
-{
-    $order = Order::with([
-            'buyer', 
-            'seller', 
-            'orderDetails.product', 
+    {
+        $order = Order::with([
+            'buyer',
+            'seller',
+            'orderDetails.product',
             'payment',
             'refund' // Add refund relationship
         ])
-        ->where(function ($query) {
-            $query->where('buyer_id', Auth::id())
-                  ->orWhere('seller_id', Auth::id());
-        })
-        ->findOrFail($id);
+            ->where(function ($query) {
+                $query->where('buyer_id', Auth::id())
+                    ->orWhere('seller_id', Auth::id());
+            })
+            ->findOrFail($id);
 
-    // Get seller's bank accounts
-    $sellerBankAccounts = BankAccount::where('user_id', $order->seller_id)
-        ->orderBy('is_primary', 'desc') // Primary account first
-        ->orderBy('created_at', 'asc')
-        ->limit(3) // Show max 3 accounts
-        ->get();
+        // Get seller's bank accounts
+        $sellerBankAccounts = BankAccount::where('user_id', $order->seller_id)
+            ->orderBy('is_primary', 'desc') // Primary account first
+            ->orderBy('created_at', 'asc')
+            ->limit(3) // Show max 3 accounts
+            ->get();
 
-    // Get refund data if exists
-    $refund = $order->refund; // Will be null if no refund
+        // Get refund data if exists
+        $refund = $order->refund; // Will be null if no refund
 
-    // dd($refund);
+        // dd($refund);
 
-    return view('buyer.orders.show', compact('order', 'sellerBankAccounts', 'refund'));
-}
+        return view('buyer.orders.show', compact('order', 'sellerBankAccounts', 'refund'));
+    }
 
     /**
      * List user's orders
