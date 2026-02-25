@@ -11,6 +11,7 @@ use App\Models\CartItem;
 use App\Models\Refund;
 use App\Models\Shipment;
 use App\Services\NotificationService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -603,6 +604,213 @@ class OrderController extends Controller
                 'success' => false,
                 'message' => 'Failed to get tracking info: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Get order summary data
+     */
+    public function getSummary(Request $request)
+    {
+        $request->validate([
+            'period' => 'required|in:7days,30days,3months,6months,1year,all,custom',
+            'status' => 'nullable|string',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        $buyerId = Auth::id();
+        $query = Order::where('buyer_id', $buyerId)
+            ->with(['seller', 'orderDetails.product']);
+
+        // Apply date filter
+        $dateRange = $this->getDateRange($request->period, $request->date_from, $request->date_to);
+        if ($dateRange['start']) {
+            $query->where('created_at', '>=', $dateRange['start']);
+        }
+        if ($dateRange['end']) {
+            $query->where('created_at', '<=', $dateRange['end']);
+        }
+
+        // Apply status filter
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->get();
+
+        // Calculate statistics
+        $stats = [
+            'total_orders' => $orders->count(),
+            'total_spent' => $orders->sum('total_amount'),
+            'total_items' => $orders->sum(function ($order) {
+                return $order->orderDetails->sum('quantity');
+            }),
+            'completed_orders' => $orders->where('status', 'delivered')->count(),
+            'pending_orders' => $orders->whereIn('status', ['pending_payment', 'pending_verification'])->count(),
+            'cancelled_orders' => $orders->whereIn('status', ['cancelled', 'auto_cancelled', 'refunded'])->count(),
+            'average_order_value' => $orders->count() > 0 ? $orders->sum('total_amount') / $orders->count() : 0,
+        ];
+
+        // Orders by status
+        $ordersByStatus = $orders->groupBy('status')->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'total' => $group->sum('total_amount'),
+            ];
+        });
+
+        // Orders by seller
+        $ordersBySeller = $orders->groupBy('seller_id')->map(function ($group) {
+            return [
+                'seller_name' => $group->first()->seller->name,
+                'count' => $group->count(),
+                'total' => $group->sum('total_amount'),
+            ];
+        })->sortByDesc('total')->take(5);
+
+        // Top products
+        $topProducts = [];
+        foreach ($orders as $order) {
+            foreach ($order->orderDetails as $detail) {
+                $productId = $detail->product_id;
+                if (!isset($topProducts[$productId])) {
+                    $topProducts[$productId] = [
+                        'product_name' => $detail->product->title ?? 'Unknown',
+                        'quantity' => 0,
+                        'total_spent' => 0,
+                    ];
+                }
+                $topProducts[$productId]['quantity'] += $detail->quantity;
+                $topProducts[$productId]['total_spent'] += $detail->total_price;
+            }
+        }
+        $topProducts = collect($topProducts)->sortByDesc('total_spent')->take(5);
+
+        // Monthly trend (last 6 months if applicable)
+        $monthlyTrend = $orders
+            ->groupBy(function ($order) {
+                return $order->created_at->format('Y-m');
+            })
+            ->map(function ($group) {
+                return [
+                    'count' => $group->count(),
+                    'total' => $group->sum('total_amount'),
+                ];
+            })
+            ->sortKeys()
+            ->take(6);
+
+        return response()->json([
+            'success' => true,
+            'period' => $request->period,
+            'date_range' => $dateRange,
+            'stats' => $stats,
+            'orders_by_status' => $ordersByStatus,
+            'orders_by_seller' => $ordersBySeller,
+            'top_products' => $topProducts,
+            'monthly_trend' => $monthlyTrend,
+        ]);
+    }
+
+    /**
+     * Generate PDF report
+     */
+    public function generatePdf(Request $request)
+    {
+        $request->validate([
+            'period' => 'required|in:7days,30days,3months,6months,1year,all,custom',
+            'status' => 'nullable|string',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        // Get summary data
+        $summaryResponse = $this->getSummary($request);
+        $data = $summaryResponse->getData(true);
+
+        // Get orders list
+        $buyerId = Auth::id();
+        $query = Order::where('buyer_id', $buyerId)
+            ->with(['seller', 'orderDetails.product']);
+
+        $dateRange = $this->getDateRange($request->period, $request->date_from, $request->date_to);
+        if ($dateRange['start']) {
+            $query->where('created_at', '>=', $dateRange['start']);
+        }
+        if ($dateRange['end']) {
+            $query->where('created_at', '<=', $dateRange['end']);
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->get();
+
+        // Generate HTML
+        $html = view('buyer.orders.orderPdf', [
+            'data' => $data,
+            'orders' => $orders,
+            'buyer' => Auth::user(),
+        ])->render();
+
+        $pdf = Pdf::loadHTML($html);
+
+        return $pdf->stream('orders.pdf'); // tampil di browser
+    }
+
+    /**
+     * Get date range based on period
+     */
+    private function getDateRange($period, $dateFrom = null, $dateTo = null)
+    {
+        $now = now();
+
+        switch ($period) {
+            case '7days':
+                return [
+                    'start' => $now->copy()->subDays(7),
+                    'end' => $now,
+                    'label' => 'Last 7 Days'
+                ];
+            case '30days':
+                return [
+                    'start' => $now->copy()->subDays(30),
+                    'end' => $now,
+                    'label' => 'Last 30 Days'
+                ];
+            case '3months':
+                return [
+                    'start' => $now->copy()->subMonths(3),
+                    'end' => $now,
+                    'label' => 'Last 3 Months'
+                ];
+            case '6months':
+                return [
+                    'start' => $now->copy()->subMonths(6),
+                    'end' => $now,
+                    'label' => 'Last 6 Months'
+                ];
+            case '1year':
+                return [
+                    'start' => $now->copy()->subYear(),
+                    'end' => $now,
+                    'label' => 'Last Year'
+                ];
+            case 'custom':
+                return [
+                    'start' => $dateFrom ? \Carbon\Carbon::parse($dateFrom) : null,
+                    'end' => $dateTo ? \Carbon\Carbon::parse($dateTo) : null,
+                    'label' => 'Custom Range'
+                ];
+            case 'all':
+            default:
+                return [
+                    'start' => null,
+                    'end' => null,
+                    'label' => 'All Time'
+                ];
         }
     }
 }

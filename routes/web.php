@@ -127,6 +127,12 @@ Route::middleware('auth')->group(function () {
         // Update order status (Seller)
         Route::post('/{id}/update-status', 'updateStatus')->name('order.update-status');
 
+        // Get summary data (AJAX)
+        Route::post('/orders/summary', 'getSummary')->name('orders.summary');
+
+        // Generate PDF report
+        Route::post('/orders/summary/pdf', 'generatePdf')->name('orders.summary.pdf');
+
         // Cancel order (Buyer)
         Route::post('/{id}/cancel', 'cancel')->name('order.cancel');
 
