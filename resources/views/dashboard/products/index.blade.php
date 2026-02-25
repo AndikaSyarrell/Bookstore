@@ -120,22 +120,30 @@
                                 <input type="checkbox"
                                     class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Title
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Product</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Author</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock
+                                Category
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Description</th>
+                                sold
+                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Created</th>
+                                Price
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Stock
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Revenue
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Created
+                            </th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions</th>
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -173,7 +181,11 @@
                                         <span class="text-sm text-gray-600">{{ $p->category->name }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-sm text-gray-600">{{ $p->author }}</span>
+                                        @if($p->sold > 0)
+                                             <span class="text-sm text-green-600 font-medium">{{ $p->sold }}</span>
+                                        @else
+                                        <span class="text-sm text-gray-600">0</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         Rp {{ number_format($p->price, 0, ',', '.') }}
@@ -182,7 +194,7 @@
                                         <span class="text-sm font-medium text-gray-900">{{ $p->stock}}</span>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <span class="text-sm text-gray-600">{{ Str::limit($p->description, 5) }}</span>
+                                        <span class="text-sm text-green-600">Rp {{ number_format($p->revenue, 0, ',', '.') }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $p->created_at->format('M d, Y') }}

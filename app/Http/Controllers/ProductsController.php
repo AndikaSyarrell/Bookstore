@@ -77,6 +77,7 @@ class ProductsController extends Controller
             "author" => "sometimes|string|max:255",
             "category" => "required|exists:categories,id",
             "price" => "required|numeric",
+            "selling_price" => "required|numeric",
             "stock" => "required|numeric",
             "description" => 'nullable|string|max:500',
             'img' => 'nullable', // Validasi file gambar
@@ -88,6 +89,7 @@ class ProductsController extends Controller
             "seller_id" => Auth::user()->id,
             "category_id" => $request->category,
             "price" => $request->price,
+            "selling_price" => $request->selling_price,
             "stock" => $request->stock,
             "description" => $request->description,
             "img" => null
@@ -189,6 +191,7 @@ class ProductsController extends Controller
             "author" => "sometimes|string|max:255",
             "category" => "required|exists:categories,id",
             "price" => "required|numeric",
+            "selling_price" => "required|numeric",
             "stock" => "required|numeric",
             "description" => 'nullable|string|max:500',
             'img' => 'nullable',
@@ -200,6 +203,7 @@ class ProductsController extends Controller
             "author" => $request->author,
             "category_id" => $request->category,
             "price" => $request->price,
+            "selling_price" => $request->selling_price,
             "stock" => $request->stock,
             "description" => $request->description,
         ];

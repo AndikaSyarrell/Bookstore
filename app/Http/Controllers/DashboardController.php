@@ -18,50 +18,51 @@ use Illuminate\Contracts\Pagination\Paginator;
 class DashboardController extends Controller
 {
     public function index()
-{
-    $role = Auth::user()?->role?->name;
+    {
+        $role = Auth::user()?->role?->name;
 
-    return match($role) {
-        'master' => $this->masterDashboard(),
-        'seller' => $this->sellerDashboard(),
-        default => view('errors.index', ['message' => 'unauthorized']),
-    };
-}
+        return match ($role) {
+            'master' => $this->masterDashboard(),
+            'seller' => $this->sellerDashboard(),
+            default => view('errors.index', ['message' => 'unauthorized']),
+        };
+    }
 
-    public function masterDashboard(){
-         // Overall Statistics
+    public function masterDashboard()
+    {
+        // Overall Statistics
         $stats = [
             // Users
             'total_users' => User::count(),
             'total_sellers' => User::whereHas('role', fn($q) => $q->where('name', 'seller'))->count(),
             'total_buyers' => User::whereHas('role', fn($q) => $q->where('name', 'buyer'))->count(),
             'new_users_month' => User::whereMonth('created_at', now()->month)->count(),
-            
+
             // Products
             'total_products' => Product::count(),
             'active_products' => Product::where('stock', '>', 0)->count(),
             'out_of_stock' => Product::where('stock', 0)->count(),
             'products_today' => Product::whereDate('created_at', today())->count(),
-            
+
             // Orders
             'total_orders' => Order::count(),
             'pending_orders' => Order::whereIn('status', ['pending_payment', 'pending_verification'])->count(),
             'completed_orders' => Order::where('status', 'delivered')->count(),
             'cancelled_orders' => Order::where('status', 'auto_cancelled')->count(),
             'orders_today' => Order::whereDate('created_at', today())->count(),
-            
+
             // Revenue
             'total_revenue' => Order::where('status', 'delivered')->sum('total_amount'),
             'revenue_month' => Order::where('status', 'delivered')->whereMonth('created_at', now()->month)->sum('total_amount'),
             'revenue_today' => Order::where('status', 'delivered')->whereDate('created_at', today())->sum('total_amount'),
             'pending_revenue' => Order::whereIn('status', ['processing', 'shipped'])->sum('total_amount'),
-            
+
             // Refunds
             'total_refunds' => Refund::count(),
             'pending_refunds' => Refund::where('status', 'pending')->count(),
             'approved_refunds' => Refund::where('status', 'approved')->count(),
             'refund_amount' => Refund::where('status', 'approved')->sum('refund_amount'),
-            
+
             // Bank Accounts
             'total_bank_accounts' => BankAccount::count(),
             'verified_accounts' => BankAccount::where('is_verified', true)->count(),
@@ -83,7 +84,7 @@ class DashboardController extends Controller
         // Top Sellers (by revenue)
         $topSellers = User::whereHas('role', fn($q) => $q->where('name', 'seller'))
             ->withCount(['sellerOrders as total_orders'])
-            ->withSum(['sellerOrders as total_revenue' => function($q) {
+            ->withSum(['sellerOrders as total_revenue' => function ($q) {
                 $q->where('status', 'delivered');
             }], 'total_amount')
             ->orderBy('total_revenue', 'desc')
@@ -92,7 +93,7 @@ class DashboardController extends Controller
 
         // Top Products (by sales)
         $topProducts = Product::with('seller')
-            ->withCount(['orderDetails as total_sold' => function($query) {
+            ->withCount(['orderDetails as total_sold' => function ($query) {
                 $query->select(DB::raw('SUM(quantity)'));
             }])
             ->withSum(['orderDetails as total_revenue'], 'price')
@@ -130,14 +131,14 @@ class DashboardController extends Controller
 
         // Platform Performance
         $performance = [
-            'avg_order_value' => $stats['completed_orders'] > 0 
-                ? $stats['total_revenue'] / $stats['completed_orders'] 
+            'avg_order_value' => $stats['completed_orders'] > 0
+                ? $stats['total_revenue'] / $stats['completed_orders']
                 : 0,
-            'conversion_rate' => $stats['total_orders'] > 0 
-                ? ($stats['completed_orders'] / $stats['total_orders']) * 100 
+            'conversion_rate' => $stats['total_orders'] > 0
+                ? ($stats['completed_orders'] / $stats['total_orders']) * 100
                 : 0,
-            'avg_products_per_seller' => $stats['total_sellers'] > 0 
-                ? $stats['total_products'] / $stats['total_sellers'] 
+            'avg_products_per_seller' => $stats['total_sellers'] > 0
+                ? $stats['total_products'] / $stats['total_sellers']
                 : 0,
             'seller_with_bank' => User::whereHas('role', fn($q) => $q->where('name', 'seller'))
                 ->whereHas('bankAccounts')
@@ -260,7 +261,20 @@ class DashboardController extends Controller
 
     public function showProducts()
     {
-        $products = Product::where('seller_id', '=', Auth::user()->id)->paginate(5);
+        $products = Product::where('seller_id', Auth::id())
+            ->withSum(['orderDetails as sold' => function ($q) {
+                $q->whereHas('orders', function ($q2) {
+                    $q2->where('status', 'delivered');
+                });
+            }], 'quantity')
+            ->addSelect([
+                'revenue' => \DB::table('order_details')
+                    ->selectRaw('COALESCE(SUM(quantity * (selling_price - price)),0)')
+                    ->join('orders', 'orders.id', '=', 'order_details.order_id')
+                    ->whereColumn('order_details.product_id', 'products.id')
+                    ->where('orders.status', 'delivered')
+            ])
+            ->paginate(5);
         return view('dashboard.products.index', ['products' => $products]);
     }
 
@@ -371,16 +385,16 @@ class DashboardController extends Controller
         // Search
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('no_telp', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('no_telp', 'like', "%{$search}%");
             });
         }
 
         // Filter by role
         if ($request->has('role') && $request->role != '') {
-            $query->whereHas('role', function($q) use ($request) {
+            $query->whereHas('role', function ($q) use ($request) {
                 $q->where('id', $request->role);
             });
         }

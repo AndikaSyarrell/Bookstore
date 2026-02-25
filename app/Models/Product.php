@@ -13,6 +13,7 @@ class Product extends Model
         'category_id',
         'description',
         'price',
+        'selling_price',
         'stock',
         'img',
     ];
@@ -33,6 +34,6 @@ class Product extends Model
     }
     public function orderDetails()
     {
-        return $this->hasMany(CartItem::class);
+        return $this->hasMany(OrderDetail::class);
     }
 }
