@@ -30,6 +30,7 @@ class SalesReportController extends Controller
             // Gather sales data
             $salesData = $this->gatherSalesData($sellerId, $month, $year);
 
+            
             // Generate Excel
             $filename = $this->generateExcel($salesData);
 
@@ -48,96 +49,120 @@ class SalesReportController extends Controller
      * Gather sales data for the period
      */
     private function gatherSalesData($sellerId, $month, $year)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        // Date range
-        $startDate = "{$year}-{$month}-01";
-        $endDate = date('Y-m-t', strtotime($startDate)); // Last day of month
+    $startDate = "{$year}-{$month}-01";
+    $endDate = date('Y-m-t', strtotime($startDate));
 
-        // Get orders
-        $orders = Order::where('seller_id', $sellerId)
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->with(['buyer', 'orderDetails.product'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+    $orders = Order::where('seller_id', $sellerId)
+    ->where('status', 'delivered')
+    ->whereBetween('created_at', [$startDate, $endDate])
+    ->with(['buyer', 'orderDetails.product', 'shipment'])
+    ->orderBy('created_at', 'desc')
+    ->get();
 
-        // Calculate summary
-        $summary = [
-            'total_orders' => $orders->count(),
-            'total_revenue' => $orders->sum('total_amount'),
-            'total_products_sold' => $orders->sum(function ($order) {
-                return $order->orderDetails->sum('quantity');
-            }),
-            'avg_order_value' => $orders->count() > 0 
-                ? $orders->sum('total_amount') / $orders->count() 
-                : 0,
-        ];
+    // Summary sesuai DB
+    $summary = [
+        'total_orders' => $orders->count(),
 
-        // Format orders
-        $ordersData = $orders->map(function ($order) {
+        // Total revenue dari order_details.total_price
+        'total_revenue' => DB::table('order_details')
+            ->join('orders','orders.id','=','order_details.order_id')
+            ->where('orders.seller_id',$sellerId)
+            ->where('orders.status','delivered')
+            ->whereBetween('orders.created_at',[$startDate,$endDate])
+            ->sum('order_details.total_price'),
+
+        'total_products_sold' => DB::table('order_details')
+            ->join('orders','orders.id','=','order_details.order_id')
+            ->where('orders.seller_id',$sellerId)
+            ->where('orders.status','delivered')
+            ->whereBetween('orders.created_at',[$startDate,$endDate])
+            ->sum('order_details.quantity'),
+
+        'avg_order_value' => $orders->count() > 0
+            ? $orders->sum('total_amount') / $orders->count()
+            : 0,
+    ];
+
+    $ordersData = $orders->map(function ($order) {
+    return [
+        'order_number' => $order->order_number,
+        'date' => $order->created_at->format('Y-m-d'),
+        'buyer_name' => $order->buyer->name ?? '-',
+        'items' => $order->orderDetails->sum('quantity'),
+        'total' => $order->total_amount,
+        'status' => ucfirst($order->status),
+
+        'shipping' => [
+            'carrier' => $order->shipment->carrier ?? '-',
+            'tracking_number' => $order->shipment->tracking_number ?? '-',
+            'tracking_url' => $order->shipment->tracking_url ?? null,
+            'shipped_date' => $order->shipment->shipped_date ?? null,
+            'delivery_date' => $order->shipment->delivery_date ?? null,
+            'estimated_delivery' => $order->shipment->estimated_delivery ?? null,
+        ],
+    ];
+})->toArray();
+
+    // Products sold sesuai DB
+    $products = DB::table('order_details')
+        ->join('orders', 'order_details.order_id', '=', 'orders.id')
+        ->join('products', 'order_details.product_id', '=', 'products.id')
+        ->where('orders.seller_id', $sellerId)
+        ->where('orders.status', 'delivered')
+        ->whereBetween('orders.created_at', [$startDate, $endDate])
+        ->select(
+            'products.title as product_name',
+            'products.id as sku',
+
+            DB::raw('SUM(order_details.quantity) as quantity_sold'),
+
+            // Revenue = total_price
+            DB::raw('SUM(order_details.total_price) as revenue'),
+
+            // Profit sesuai struktur DB
+            DB::raw('SUM(order_details.quantity * (products.selling_price - products.price)) as profit'),
+
+            DB::raw('AVG(order_details.total_price / order_details.quantity) as avg_price')
+        )
+        ->groupBy('products.id','products.title')
+        ->orderByDesc('revenue')
+        ->get()
+        ->map(function ($item) {
             return [
-                'order_number' => $order->order_number,
-                'date' => $order->created_at->format('Y-m-d'),
-                'buyer_name' => $order->buyer->name,
-                'items' => $order->orderDetails->sum('quantity'),
-                'subtotal' => $order->subtotal ?? $order->total_amount,
-                'tax' => $order->tax ?? 0,
-                'shipping' => $order->shipping_cost ?? 0,
-                'total' => $order->total_amount,
-                'status' => ucfirst(str_replace('_', ' ', $order->status)),
+                'product_name' => $item->product_name,
+                'sku' => 'PRD-'.$item->sku,
+                'quantity_sold' => (int)$item->quantity_sold,
+                'revenue' => (float)$item->revenue,
+                'profit' => (float)$item->profit,
+                'avg_price' => (float)$item->avg_price,
             ];
-        })->toArray();
+        })
+        ->toArray();
 
-        // Get products sold
-        $products = DB::table('order_details')
-            ->join('orders', 'order_details.order_id', '=', 'orders.id')
-            ->join('products', 'order_details.product_id', '=', 'products.id')
-            ->where('orders.seller_id', $sellerId)
-            ->whereBetween('orders.created_at', [$startDate, $endDate])
-            ->select(
-                'products.title as product_name',
-                'products.id as sku',
-                DB::raw('SUM(order_details.quantity) as quantity_sold'),
-                DB::raw('SUM(order_details.total_price) as revenue'),
-                DB::raw('AVG(order_details.total_price) as avg_price')
-            )
-            ->groupBy('products.id', 'products.title')
-            ->orderBy('revenue', 'desc')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'product_name' => $item->product_name,
-                    'sku' => 'PRD-' . $item->sku,
-                    'quantity_sold' => (int) $item->quantity_sold,
-                    'revenue' => (float) $item->revenue,
-                    'avg_price' => (float) $item->avg_price,
-                ];
-            })
-            ->toArray();
+    $monthNames = [
+        1=>'January',2=>'February',3=>'March',4=>'April',
+        5=>'May',6=>'June',7=>'July',8=>'August',
+        9=>'September',10=>'October',11=>'November',12=>'December'
+    ];
 
-        // Month name
-        $monthNames = [
-            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
-            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
-            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
-        ];
-
-        return [
-            'seller' => [
-                'name' => $user->name,
-                'email' => $user->email,
-            ],
-            'period' => [
-                'month' => $month,
-                'year' => $year,
-                'month_name' => $monthNames[$month],
-            ],
-            'summary' => $summary,
-            'orders' => $ordersData,
-            'products' => $products,
-        ];
-    }
+    return [
+        'seller'=>[
+            'name'=>$user->name,
+            'email'=>$user->email,
+        ],
+        'period'=>[
+            'month'=>$month,
+            'year'=>$year,
+            'month_name'=>$monthNames[$month],
+        ],
+        'summary'=>$summary,
+        'orders'=>$ordersData,
+        'products'=>$products,
+    ];
+}
 
     /**
      * Generate Excel file using Python script

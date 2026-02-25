@@ -31,11 +31,12 @@ def create_sales_report(sales_data):
                 'date': str,
                 'buyer_name': str,
                 'items': int,
-                'subtotal': float,
-                'tax': float,
-                'shipping': float,
                 'total': float,
-                'status': str
+                'status': str,
+                'shipping': {
+                    'carrier': str,
+                    'tracking_number': str
+                }
             }
         ],
         'products': [
@@ -121,7 +122,7 @@ def create_orders_sheet(wb, data):
     sheet = wb.create_sheet('Orders')
     
     # Headers
-    headers = ['Order No', 'Date', 'Buyer', 'Items', 'Subtotal', 'Tax', 'Shipping', 'Total', 'Status']
+    headers = ['Order No', 'Date', 'Buyer', 'Items', 'Total', 'Status', 'Carrier', 'Tracking']
     
     for col, header in enumerate(headers, 1):
         cell = sheet.cell(1, col, header)
@@ -136,11 +137,10 @@ def create_orders_sheet(wb, data):
         sheet.cell(row, 2, order['date'])
         sheet.cell(row, 3, order['buyer_name'])
         sheet.cell(row, 4, order['items'])
-        sheet.cell(row, 5, order['subtotal']).number_format = 'Rp #,##0'
-        sheet.cell(row, 6, order['tax']).number_format = 'Rp #,##0'
-        sheet.cell(row, 7, order['shipping']).number_format = 'Rp #,##0'
-        sheet.cell(row, 8, order['total']).number_format = 'Rp #,##0'
-        sheet.cell(row, 9, order['status'])
+        sheet.cell(row, 5, order['total']).number_format = 'Rp #,##0'
+        sheet.cell(row, 6, order['status'])
+        sheet.cell(row, 7, order.get('shipping', {}).get('carrier', '-'))
+        sheet.cell(row, 8, order.get('shipping', {}).get('tracking_number', '-'))   
         row += 1
     
     # Totals row
@@ -157,7 +157,7 @@ def create_orders_sheet(wb, data):
             sheet.cell(total_row, col).fill = PatternFill('solid', start_color='D9E1F2')
     
     # Column widths
-    widths = [15, 12, 20, 8, 15, 12, 12, 15, 15]
+    widths = [15, 12, 20, 8, 15, 15, 18, 20]
     for col, width in enumerate(widths, 1):
         sheet.column_dimensions[get_column_letter(col)].width = width
 
@@ -166,7 +166,7 @@ def create_products_sheet(wb, data):
     sheet = wb.create_sheet('Products')
     
     # Headers
-    headers = ['Product Name', 'SKU', 'Qty Sold', 'Revenue', 'Avg Price']
+    headers = ['Product Name', 'SKU', 'Qty Sold', 'Revenue', 'Profit', 'Avg Price']
     
     for col, header in enumerate(headers, 1):
         cell = sheet.cell(1, col, header)
@@ -181,7 +181,8 @@ def create_products_sheet(wb, data):
         sheet.cell(row, 2, product.get('sku', '-'))
         sheet.cell(row, 3, product['quantity_sold'])
         sheet.cell(row, 4, product['revenue']).number_format = 'Rp #,##0'
-        sheet.cell(row, 5, product['avg_price']).number_format = 'Rp #,##0'
+        sheet.cell(row, 5, product.get('profit', 0)).number_format = 'Rp #,##0'
+        sheet.cell(row, 6, product['avg_price']).number_format = 'Rp #,##0'
         row += 1
     
     # Totals row
@@ -190,13 +191,14 @@ def create_products_sheet(wb, data):
         sheet.cell(total_row, 1, 'TOTAL').font = Font(bold=True)
         sheet.cell(total_row, 3, f'=SUM(C2:C{row-1})')
         sheet.cell(total_row, 4, f'=SUM(D2:D{row-1})').number_format = 'Rp #,##0'
+        sheet.cell(total_row, 5, f'=SUM(E2:E{row-1})').number_format = 'Rp #,##0'
         
         for col in range(1, 6):
             sheet.cell(total_row, col).font = Font(bold=True)
             sheet.cell(total_row, col).fill = PatternFill('solid', start_color='D9E1F2')
     
     # Column widths
-    widths = [35, 15, 12, 15, 15]
+    widths = [35, 15, 12, 15, 15, 15]
     for col, width in enumerate(widths, 1):
         sheet.column_dimensions[get_column_letter(col)].width = width
 
