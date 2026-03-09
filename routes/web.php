@@ -17,6 +17,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\RefundController;
 use App\Http\Controllers\SalesReportController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SellerProfileController;
 use App\Http\Controllers\UserController;
 use App\Models\Message;
@@ -92,6 +93,13 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/home/products/{id}', [ProductsController::class, 'show'])->name('products.show');
+
+    Route::prefix('/home/search')->controller(SearchController  ::class)->group(function () {
+        Route::get('/', 'search')->name('home.search');
+        Route::get('/quick', 'quickSearch')->name('home.search.quick');
+        Route::get('/categories', 'getCategories')->name('home.search.categories');
+        Route::post('/track-click', 'trackClick')->name('home.search.track-click');
+    });
 
     Route::prefix('/home/cart')->controller(CartController::class)->group(function () {
         Route::get('/get', 'getCart')->name('cart.get');

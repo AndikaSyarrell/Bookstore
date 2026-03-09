@@ -10,7 +10,8 @@
         <!-- Right Side: Search, Notifications, Profile -->
         <div class="flex items-center space-x-4">
             <!-- Search Bar -->
-            <div class="hidden md:block">
+             @include('layouts.partials.components.search')
+            <!-- <div class="hidden md:block">
                 <div class="relative">
                     <input
                         type="text"
@@ -20,12 +21,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
-            </div>
+            </div> -->
 
 
             <div class="flex items-center">
-                <!-- message -->
-                <!-- @include('layouts.partials.buttons.message') -->
 
                 <!-- Notifications -->
                 @include('layouts.partials.buttons.notification')
