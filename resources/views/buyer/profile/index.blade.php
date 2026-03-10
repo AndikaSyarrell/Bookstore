@@ -394,7 +394,7 @@ function profilePage() {
 
         loadUserData() {
             // Load from server or use blade data
-            this.profilePhoto = '{{ $user->img ? asset("storage/users/" . $user->img) : "" }}' || null;
+            this.profilePhoto = '{{ $user->img ? asset("storage/profile/" . $user->img) : "" }}' || null;
         },
 
         async updateProfile() {

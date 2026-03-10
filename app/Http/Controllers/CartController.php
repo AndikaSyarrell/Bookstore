@@ -96,7 +96,7 @@ class CartController extends Controller
                     'cart_id' => $cart->id,
                     'product_id' => $product->id,
                     'quantity' => $quantity,
-                    'price' => $product->price
+                    'price' => $product->selling_price
                 ]);
             }
 
@@ -107,7 +107,7 @@ class CartController extends Controller
                     'id' => $cartItem->id,
                     'product_id' => $product->id,
                     'name' => $product->title,
-                    'price' => (float) $product->price,
+                    'price' => (float) $product->selling_price,
                     'quantity' => $cartItem->quantity,
                     'image' => $product->image
                 ]

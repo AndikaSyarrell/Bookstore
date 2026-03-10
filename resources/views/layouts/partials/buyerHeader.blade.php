@@ -40,9 +40,14 @@
                     @click.away="profileOpen = false"
                     class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition">
                     <!-- Avatar -->
-                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </div>
+                    @if(auth()->user()->img)
+                                <img src="{{ asset('storage/profile/' . auth()->user()->img) }}"
+                                    class="w-10 h-10 rounded-full object-cover">
+                                @else
+                                <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                                    {{ substr(auth()->user()->name,0,1) }}
+                                </div>
+                                @endif
                     <div class="hidden md:block text-left">
                         <p class="text-sm font-semibold text-gray-700">{{ auth()->user()->name }}</p>
                         <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>

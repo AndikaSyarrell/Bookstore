@@ -18,7 +18,7 @@ class CartItemsController extends Controller
 
         return CartItem::updateOrCreate(
             ['cart_id' => $cart->id, 'product_id' => $productId],
-            ['qty' => DB::raw("qty + $qty"), 'price' => $product->price]
+            ['qty' => DB::raw("qty + $qty"), 'price' => $product->selling_price]
         );
     }
 

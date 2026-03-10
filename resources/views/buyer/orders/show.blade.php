@@ -317,8 +317,9 @@
                             Approve Payment
                         </button>
                         <button
+                        disabled
                             @click="verifyPayment('reject')"
-                            class="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
+                            class="hidden flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
                             Reject Payment
                         </button>
                     </div>

@@ -148,9 +148,6 @@ def create_orders_sheet(wb, data):
         total_row = row
         sheet.cell(total_row, 1, 'TOTAL').font = Font(bold=True)
         sheet.cell(total_row, 5, f'=SUM(E2:E{row-1})').number_format = 'Rp #,##0'
-        sheet.cell(total_row, 6, f'=SUM(F2:F{row-1})').number_format = 'Rp #,##0'
-        sheet.cell(total_row, 7, f'=SUM(G2:G{row-1})').number_format = 'Rp #,##0'
-        sheet.cell(total_row, 8, f'=SUM(H2:H{row-1})').number_format = 'Rp #,##0'
         
         for col in range(1, 10):
             sheet.cell(total_row, col).font = Font(bold=True)

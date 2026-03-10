@@ -47,7 +47,7 @@ class BuyerController extends Controller
                         'id' => $product->id,
                         'name' => $product->title, // 'title' di database = 'name' di frontend
                         'image' => $product->img ? asset('storage/products/' . $product->img) : null,
-                        'price' => (float) $product->price,
+                        'price' => (float) $product->selling_price ,
                         'sold' => (int) $product->sold,
                         // data tambahan jika diperlukan:
                         'seller' => $product->seller->name,

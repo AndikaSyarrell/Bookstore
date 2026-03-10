@@ -16,7 +16,7 @@ class SearchController extends Controller
     public function quickSearch(Request $request)
     {
         $query = $request->input('q', '');
-        
+
         if (strlen($query) < 2) {
             return response()->json([
                 'products' => [],
@@ -27,15 +27,22 @@ class SearchController extends Controller
         // Search products (limit to 5 for quick results)
         $products = Product::with(['seller', 'category'])
             ->where('stock', '>', 0)
-            ->where(function($q) use ($query) {
+            ->whereHas('seller.bankAccounts') // Pastikan seller memiliki bank account
+            ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
-                  ->orWhere('author', 'like', "%{$query}%")
-                  ->orWhere('description', 'like', "%{$query}%");
+                    ->orWhere('author', 'like', "%{$query}%")
+                    ->orWhere('description', 'like', "%{$query}%")
+                    ->orWhereHas('category', function ($q) use ($query) {
+                        $q->where('name', 'like', "%{$query}%");
+                    })
+                    ->orWhereHas('seller', function ($q) use ($query) {
+                        $q->where('name', 'like', "%{$query}%");
+                    });
             })
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(function($product) {
+            ->map(function ($product) {
                 return [
                     'id' => $product->id,
                     'title' => $product->title,
@@ -49,10 +56,11 @@ class SearchController extends Controller
 
         // Get total count
         $totalCount = Product::where('stock', '>', 0)
-            ->where(function($q) use ($query) {
+            ->whereHas('seller.bankAccounts') // Pastikan seller memiliki bank account
+            ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
-                  ->orWhere('author', 'like', "%{$query}%")
-                  ->orWhere('description', 'like', "%{$query}%");
+                    ->orWhere('author', 'like', "%{$query}%")
+                    ->orWhere('description', 'like', "%{$query}%");
             })
             ->count();
 
@@ -67,14 +75,14 @@ class SearchController extends Controller
      */
     public function getCategories()
     {
-        $categories = Category::withCount(['products' => function($query) {
-                $query->where('stock', '>', 0);
-            }])
+        $categories = Category::withCount(['products' => function ($query) {
+            $query->where('stock', '>', 0);
+        }])
             ->having('products_count', '>', 0)
             ->orderBy('products_count', 'desc')
             ->limit(12)
             ->get()
-            ->map(function($category) {
+            ->map(function ($category) {
                 return [
                     'id' => $category->id,
                     'name' => $category->name,
@@ -88,13 +96,14 @@ class SearchController extends Controller
         ]);
     }
 
-        /**
+    /**
      * Search products - Returns to dedicated search results page
      */
     public function search(Request $request)
     {
         $query = Product::with(['seller', 'category'])
-            ->where('stock', '>', 0);
+            ->where('stock', '>', 0)
+            ->whereHas('seller.bankAccounts');
 
         $searchQuery = $request->input('q', '');
         $filters = [
@@ -107,10 +116,20 @@ class SearchController extends Controller
 
         // Search by keyword
         if (!empty($searchQuery)) {
-            $query->where(function($q) use ($searchQuery) {
+            // 1. Pastikan SELLER memiliki BANK ACCOUNT (Syarat Wajib)
+            $query->whereHas('seller.bankAccounts');
+
+            // 2. Kelompokkan pencarian kata kunci (Syarat Opsional di dalam)
+            $query->where(function ($q) use ($searchQuery) {
                 $q->where('title', 'like', "%{$searchQuery}%")
-                  ->orWhere('author', 'like', "%{$searchQuery}%")
-                  ->orWhere('description', 'like', "%{$searchQuery}%");
+                    ->orWhere('author', 'like', "%{$searchQuery}%")
+                    ->orWhere('description', 'like', "%{$searchQuery}%")
+                    ->orWhereHas('category', function ($q) use ($searchQuery) {
+                        $q->where('name', 'like', "%{$searchQuery}%");
+                    })
+                    ->orWhereHas('seller', function ($q) use ($searchQuery) {
+                        $q->where('name', 'like', "%{$searchQuery}%");
+                    });
             });
         }
 
@@ -142,7 +161,7 @@ class SearchController extends Controller
                 $query->orderBy('title', 'desc');
                 break;
             case 'popular':
-                $query->withCount(['orderDetails as total_sold' => function($q) {
+                $query->withCount(['orderDetails as total_sold' => function ($q) {
                     $q->select(DB::raw('COALESCE(SUM(quantity), 0)'));
                 }])->orderBy('total_sold', 'desc');
                 break;
@@ -154,17 +173,17 @@ class SearchController extends Controller
 
         // Get results with pagination
         $products = $query->paginate(12)->appends($request->all());
-        
+
         // Get total results count
         $totalResults = $products->total();
 
         // All categories for filter
-        $categories = Category::withCount(['products' => function($query) {
+        $categories = Category::withCount(['products' => function ($query) {
             $query->where('stock', '>', 0);
         }])
-        ->having('products_count', '>', 0)
-        ->orderBy('name', 'asc')
-        ->get();
+            ->having('products_count', '>', 0)
+            ->orderBy('name', 'asc')
+            ->get();
 
         // Price range stats
         $priceStats = Product::where('stock', '>', 0)
@@ -187,7 +206,7 @@ class SearchController extends Controller
     {
         // Optional: Store in analytics table or log
         // For now, just return success
-        
+
         return response()->json(['success' => true]);
     }
 }

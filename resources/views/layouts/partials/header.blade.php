@@ -28,15 +28,19 @@
 
             <!-- Profile Dropdown -->
             <div class="relative z-10">
-                <button 
+                <button
                     @click="profileOpen = !profileOpen"
                     @click.away="profileOpen = false"
-                    class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition"
-                >
+                    class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition">
                     <!-- Avatar -->
-                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </div>
+                    @if(auth()->user()->img)
+                                <img src="{{ asset('storage/profile/' . auth()->user()->img) }}"
+                                    class="w-10 h-10 rounded-full object-cover">
+                                @else
+                                <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                                    {{ substr(auth()->user()->name,0,1) }}
+                                </div>
+                                @endif
                     <div class="hidden md:block text-left">
                         <p class="text-sm font-semibold text-gray-700">{{ auth()->user()->name }}</p>
                         <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
@@ -48,7 +52,7 @@
                 </button>
 
                 <!-- Dropdown Menu -->
-                <div 
+                <div
                     x-show="profileOpen"
                     x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 transform scale-95"
@@ -57,8 +61,7 @@
                     x-transition:leave-start="opacity-100 transform scale-100"
                     x-transition:leave-end="opacity-0 transform scale-95"
                     class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 border border-gray-200"
-                    style="display: none;"
-                >
+                    style="display: none;">
                     <!-- User Info -->
                     <div class="px-4 py-3 border-b border-gray-200">
                         <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->name }}</p>
@@ -74,19 +77,11 @@
                     </a>
 
                     <a href="{{ auth()->user()->role === 'master' ? route('masterProfile') : route('sellerProfile.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
-                        
+
                         <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>
                         Profile
-                    </a>
-
-                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
-                        <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        Settings
                     </a>
 
                     <div class="border-t border-gray-200 my-2"></div>

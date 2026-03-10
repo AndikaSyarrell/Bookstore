@@ -82,14 +82,14 @@ class BuyerProfileController extends Controller
 
             // Delete old photo if exists
             if ($user->img) {
-                Storage::disk('public')->delete('users/' . $user->img);
+                Storage::disk('public')->delete('profile/' . $user->img);
             }
 
             // Upload new photo
             if ($request->hasFile('photo')) {
                 $file = $request->file('photo');
                 $filename = $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('users', $filename, 'public');
+                $file->storeAs('profile', $filename, 'public');
                 
                 $user->img = $filename;
                 $user->save();
@@ -98,7 +98,7 @@ class BuyerProfileController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Profile photo updated successfully',
-                'photo_url' => $user->img ? asset('storage/users/' . $user->img) : null
+                'photo_url' => $user->img ? asset('storage/profile/' . $user->img) : null
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -117,7 +117,7 @@ class BuyerProfileController extends Controller
             $user = Auth::user();
 
             if ($user->img) {
-                Storage::disk('public')->delete('users/' . $user->img);
+                Storage::disk('public')->delete('profile/' . $user->img);
                 $user->img = null;
                 $user->save();
             }
@@ -192,7 +192,7 @@ class BuyerProfileController extends Controller
                 'province' => $user->province,
                 'postal_code' => $user->postal_code,
                 'bio' => $user->bio,
-                'img' => $user->img ? asset('storage/users/' . $user->img) : null,
+                'img' => $user->img ? asset('storage/profile/' . $user->img) : null,
                 'role' => $user->role->name ?? null,
             ]
         ]);
