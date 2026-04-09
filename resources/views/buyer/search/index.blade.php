@@ -182,7 +182,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-2xl font-bold text-blue-600">
-                                        Rp {{ number_format($product->price, 0, ',', '.') }}
+                                        Rp {{ number_format($product->selling_price, 0, ',', '.') }}
                                     </p>
                                     <div class="flex items-center gap-2 mt-2">
                                         @if($product->seller->img)

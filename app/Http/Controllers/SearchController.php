@@ -47,7 +47,7 @@ class SearchController extends Controller
                     'id' => $product->id,
                     'title' => $product->title,
                     'author' => $product->author,
-                    'price' => $product->price,
+                    'price' => $product->selling_price,
                     'img' => $product->img,
                     'category_name' => $product->category->name ?? 'Uncategorized',
                     'seller_name' => $product->seller->name ?? 'Unknown',

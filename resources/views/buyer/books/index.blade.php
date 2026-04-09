@@ -48,7 +48,7 @@
                         <div class="flex items-center gap-6 mb-6 pb-6 border-b">
                             <div>
                                 <p class="text-sm text-gray-600 mb-1">Price</p>
-                                <p class="text-3xl font-bold text-blue-600">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                                <p class="text-3xl font-bold text-blue-600">Rp {{ number_format($product->selling_price, 0, ',', '.') }}</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600 mb-1">Stock</p>
@@ -136,7 +136,7 @@
                         <div class="mb-6 p-4 bg-gray-50 rounded-lg">
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-600">Subtotal</span>
-                                <span class="text-xl font-bold text-blue-600" x-text="formatPrice({{ $product->price }} * quantity)"></span>
+                                <span class="text-xl font-bold text-blue-600" x-text="formatPrice({{ $product->selling_price }} * quantity)"></span>
                             </div>
                         </div>
 

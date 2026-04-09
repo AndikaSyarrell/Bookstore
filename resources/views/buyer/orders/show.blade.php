@@ -78,7 +78,7 @@
             <div class="lg:col-span-2 space-y-6">
 
                 <!-- Payment Section - Only show if pending_payment or pending_verification -->
-                @if(Auth::id() === $order->buyer_id && in_array($order->status, ['pending_payment', 'pending_verification', 'payment_rejected']))
+                @if(Auth::id() === $order->buyer_id && in_array($order->status, ['pending_payment', 'pending_verification']))
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <h2 class="text-lg font-bold text-gray-900 mb-4">Payment Information</h2>
 
@@ -309,7 +309,19 @@
                     </div>
                     @endif
 
-                    @if($order->status === 'pending_verification')
+                    @if($order->status === 'payment_rejected' && $order->buyer_id === Auth::id())
+                    <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                        <p class="text-sm"><strong>Payment Rejected:</strong> </p>
+
+                        <button
+                            @click="showRefundModal = true"
+                            class="w-full px-4 py-2 mt-4 border border-red-600 text-red-600 font-medium rounded-lg hover:bg-red-50">
+                            Ask for refund
+                        </button>
+                    </div>
+                    @endif
+
+                    @if($order->status === 'pending_verification' && Auth::id() === $order->seller_id   )
                     <div class="flex gap-3">
                         <button
                             @click="verifyPayment('approve')"
@@ -317,9 +329,8 @@
                             Approve Payment
                         </button>
                         <button
-                        disabled
                             @click="verifyPayment('reject')"
-                            class="hidden flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
+                            class="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
                             Reject Payment
                         </button>
                     </div>
@@ -347,6 +358,9 @@
                             </div>
                         </div>
                         @endforeach
+                        @if($order->orderDetails->isEmpty())
+                            <p class="text-gray-500">No items in this order. (might be deleted)</p>
+                        @endif
                     </div>
                 </div>
 
@@ -401,6 +415,88 @@
                     </div>
                 </div>
                 @endif
+                        <!-- Shipment Info Display (For Buyer and Seller when shipped) -->
+        @if(in_array($order->status, ['shipped', 'delivered']))
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Shipping Information</h2>
+
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Courier:</span>
+                    <span class="font-medium">{{ $order->shipment->carrier }}</span>
+                </div>
+
+                @if($order->shipment->tracking_number)
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Tracking Number:</span>
+                    <span class="font-medium">{{ $order->shipment->tracking_number }}</span>
+                </div>
+                @endif
+
+                @if($order->shipment->tracking_url)
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Track Package:</span>
+                    <a href="{{ $order->shipment->tracking_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 font-medium">
+                        Track Now →
+                    </a>
+                </div>
+                @endif
+
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Shipped Date:</span>
+                    <span class="font-medium">{{ $order->shipment->shipped_date ? $order->shipment->shipped_date->format('d M Y') : '-' }}</span>
+                </div>
+
+                @if($order->shipment->estimated_delivery)
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Estimated Delivery:</span>
+                    <span class="font-medium">{{ $order->shipment->estimated_delivery->format('d M Y') }}</span>
+                </div>
+                @endif
+
+                @if($order->shipment->delivery_date)
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Delivered:</span>
+                    <span class="font-medium text-green-600">{{ $order->shipment->delivery_date->format('d M Y') }}</span>
+                </div>
+                @endif
+
+                @if($order->shipment->notes)
+                <div class="pt-3 border-t">
+                    <p class="text-gray-600 mb-1">Notes:</p>
+                    <p class="text-gray-900">{{ $order->shipment->notes }}</p>
+                </div>
+                @endif
+            </div>
+
+            <!-- Receipt Image -->
+            @if($order->shipment->receipt_image)
+            <div class="mt-4 pt-4 border-t">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">Shipping Receipt:</h3>
+                <a href="{{ asset('storage/shipment-receipts/' . $order->shipment->receipt_image) }}" target="_blank">
+                    <img
+                        src="{{ asset('storage/shipment-receipts/' . $order->shipment->receipt_image) }}"
+                        alt="Shipping Receipt"
+                        class="max-w-full h-auto rounded border hover:opacity-90 transition-opacity cursor-pointer">
+                </a>
+            </div>
+            @endif
+
+            <!-- Confirm Delivery Button (Buyer Only) -->
+            @if(Auth::id() === $order->buyer_id && $order->status === 'shipped')
+            <div class="mt-4 pt-4 border-t">
+                <button
+                    @click="confirmDelivery()"
+                    class="w-full px-4 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                    Confirm Order Received
+                </button>
+                <p class="text-xs text-gray-500 text-center mt-2">
+                    Order will auto-complete in 7 days if not confirmed
+                </p>
+            </div>
+            @endif
+        </div>
+        @endif
 
             </div>
 
@@ -472,7 +568,6 @@
 
                     
                 </div>
-                
             </div>
 
 
@@ -635,89 +730,6 @@
         </div>
         @endif
 
-        <!-- Shipment Info Display (For Buyer and Seller when shipped) -->
-        @if(in_array($order->status, ['shipped', 'delivered']))
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Shipping Information</h2>
-
-            <div class="space-y-3 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Courier:</span>
-                    <span class="font-medium">{{ $order->shipment->carrier }}</span>
-                </div>
-
-                @if($order->shipment->tracking_number)
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Tracking Number:</span>
-                    <span class="font-medium">{{ $order->shipment->tracking_number }}</span>
-                </div>
-                @endif
-
-                @if($order->shipment->tracking_url)
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Track Package:</span>
-                    <a href="{{ $order->shipment->tracking_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 font-medium">
-                        Track Now →
-                    </a>
-                </div>
-                @endif
-
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Shipped Date:</span>
-                    <span class="font-medium">{{ $order->shipment->shipped_date ? $order->shipment->shipped_date->format('d M Y') : '-' }}</span>
-                </div>
-
-                @if($order->shipment->estimated_delivery)
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Estimated Delivery:</span>
-                    <span class="font-medium">{{ $order->shipment->estimated_delivery->format('d M Y') }}</span>
-                </div>
-                @endif
-
-                @if($order->shipment->delivery_date)
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Delivered:</span>
-                    <span class="font-medium text-green-600">{{ $order->shipment->delivery_date->format('d M Y') }}</span>
-                </div>
-                @endif
-
-                @if($order->shipment->notes)
-                <div class="pt-3 border-t">
-                    <p class="text-gray-600 mb-1">Notes:</p>
-                    <p class="text-gray-900">{{ $order->shipment->notes }}</p>
-                </div>
-                @endif
-            </div>
-
-            <!-- Receipt Image -->
-            @if($order->shipment->receipt_image)
-            <div class="mt-4 pt-4 border-t">
-                <h3 class="text-sm font-semibold text-gray-900 mb-2">Shipping Receipt:</h3>
-                <a href="{{ asset('storage/shipment-receipts/' . $order->shipment->receipt_image) }}" target="_blank">
-                    <img
-                        src="{{ asset('storage/shipment-receipts/' . $order->shipment->receipt_image) }}"
-                        alt="Shipping Receipt"
-                        class="max-w-full h-auto rounded border hover:opacity-90 transition-opacity cursor-pointer">
-                </a>
-            </div>
-            @endif
-
-            <!-- Confirm Delivery Button (Buyer Only) -->
-            @if(Auth::id() === $order->buyer_id && $order->status === 'shipped')
-            <div class="mt-4 pt-4 border-t">
-                <button
-                    @click="confirmDelivery()"
-                    class="w-full px-4 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
-                    Confirm Order Received
-                </button>
-                <p class="text-xs text-gray-500 text-center mt-2">
-                    Order will auto-complete in 7 days if not confirmed
-                </p>
-            </div>
-            @endif
-        </div>
-        @endif
-
         <!-- Refund Request Modal -->
         <div
             x-show="showRefundModal"
@@ -741,12 +753,16 @@
                                     required
                                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all">
                                     <option value="">Select reason...</option>
+                                    @if($order->status === 'payment_rejected')
+                                    <option value="payment_rejected" selected disabled>Payment was rejected by seller</option>
+                                    @else
                                     <option value="buyer_cancel">I changed my mind</option>
                                     <option value="payment_expired">Payment deadline too short</option>
                                     <option value="stock_unavailable">Product not available</option>
                                     <option value="product_defect">Product is defective</option>
                                     <option value="wrong_item">Wrong item received</option>
                                     <option value="other">Other reason</option>
+                                    @endif
                                 </select>
                             </div>
 
